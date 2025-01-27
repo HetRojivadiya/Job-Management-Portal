@@ -34,4 +34,20 @@ export class UserRepository {
     });
     return deletedCount > 0;
   }
+
+  async updateUserTwoFactorSecret(
+    userId: string,
+    secret: string,
+  ): Promise<Users | null> {
+    const user = await this.findUserById(userId);
+
+    if (user) {
+      user.twoFactorSecret = secret;
+      user.twoFactorEnabled = true;
+      await user.save();
+      return user;
+    }
+
+    return null;
+  }
 }

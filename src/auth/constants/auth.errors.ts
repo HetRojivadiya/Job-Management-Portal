@@ -7,4 +7,8 @@ export const AuthErrors = {
   ENV_VARIABLE_UNDEFINED: 'is not defined in the environment variables',
   PASSWORD_COMPARISON_FAILED: 'Password comparison failed',
   VERIFICATION_FAILED: 'Verification failed',
+  INVALID_2FA_SETUP: 'Invalid two-factor authentication setup',
+  MISSING_2FA_TOKEN: 'Two-factor authentication token is missing',
+  INVALID_2FA_TOKEN: 'Invalid two-factor authentication token',
+  USER_UNAUTHORIZED: 'User is Unauthorized',
 } as const;
