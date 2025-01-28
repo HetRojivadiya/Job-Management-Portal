@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { SignupDto } from './dto/signup.dto';
 import { JwtService } from '@nestjs/jwt';
 import { v4 as uuidv4 } from 'uuid';
@@ -17,6 +17,8 @@ import { AuthErrors } from './constants/auth.errors';
 import { AuthConfig } from './constants/auth.config';
 import * as speakeasy from 'speakeasy';
 import * as QRCode from 'qrcode';
+import { MailConfig } from './constants/mail.config';
+import { CustomUnauthorizedException } from './exeption-filter/custom-unauthorized-exception';
 
 interface JwtPayload {
   id: string;
@@ -34,57 +36,65 @@ export class AuthService {
 
   // Signup Service
   async signup(signupDto: SignupDto): Promise<Signup<User>> {
-    try {
-      const hashedPassword = await bcrypt.hash(signupDto.password, 10);
-      const role = await this.roleRepository.findRoleByName(
-        AuthConfig.ROLE_NAME,
-      );
-      if (!role) {
-        throw new Error(AuthErrors.INVALID_ROLE);
-      }
-      const newUser = await this.userRepository.createUser({
-        id: uuidv4(),
-        username: signupDto.username,
-        password: hashedPassword,
-        email: signupDto.email,
-        mobile: signupDto.mobile,
-        roleId: role.id,
-      });
-      if (!newUser) {
-        throw new Error(AuthErrors.USER_CREATION_FAILED);
-      }
-      const token = this.jwtService.sign(
-        { id: newUser.id },
-        {
-          expiresIn: AuthConfig.TOKEN_EXPIRATION,
-          secret:
-            this.configService.get<string>('JWT_SECRET') || 'yourSecretKey',
-        },
-      );
-      const mailSent = await this.sendVerificationEmail(newUser.email, token);
-      if (!mailSent) {
-        await this.userRepository.deleteUser(newUser.id);
-        throw new Error(AuthMessages.EMAIL_VERIFICATION_FAILED);
-      }
-      return {
-        data: newUser,
-        token,
-      };
-    } catch (error) {
-      throw new Error(
-        `Signup failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+    const hashedPassword = await bcrypt.hash(signupDto.password, 10);
+    const role = await this.roleRepository.findRoleByName(AuthConfig.ROLE_NAME);
+    if (!role) {
+      throw new CustomUnauthorizedException(AuthErrors.INVALID_ROLE);
+    }
+    const newUser = await this.userRepository.createUser({
+      id: uuidv4(),
+      username: signupDto.username,
+      password: hashedPassword,
+      email: signupDto.email,
+      mobile: signupDto.mobile,
+      roleId: role.id,
+    });
+
+    if (!newUser) {
+      throw new CustomUnauthorizedException(AuthErrors.USER_CREATION_FAILED);
+    }
+
+    const secret = this.configService.get<string>('JWT_SECRET');
+    if (!secret) {
+      throw new CustomUnauthorizedException(AuthErrors.JWT_SECRET_UNDEFINED);
+    }
+
+    const token = this.jwtService.sign(
+      { id: newUser.id },
+      {
+        expiresIn: AuthConfig.TOKEN_EXPIRATION,
+        secret: secret,
+      },
+    );
+
+    const url = this.configService.get<string>('VERIFY_USER_URL') + token;
+
+    const mailSent = await this.sendVerificationEmail(
+      newUser.email,
+      token,
+      url,
+    );
+    if (!mailSent) {
+      await this.userRepository.deleteUser(newUser.id);
+      throw new CustomUnauthorizedException(
+        AuthMessages.EMAIL_VERIFICATION_FAILED,
       );
     }
+    return {
+      data: newUser,
+      token,
+    };
   }
 
   // Send Verification Email
   private async sendVerificationEmail(
     email: string,
     token: string,
+    url: string,
   ): Promise<boolean> {
     const mailTrapToken = this.configService.get<string>('MAIL_TRAP_TOKEN');
     if (!mailTrapToken) {
-      throw new Error(`MAIL_TRAP_TOKEN ${AuthErrors.ENV_VARIABLE_UNDEFINED}`);
+      throw new CustomUnauthorizedException(AuthErrors.ENV_VARIABLE_UNDEFINED);
     }
     const transport = nodemailer.createTransport(
       MailtrapTransport({
@@ -92,19 +102,19 @@ export class AuthService {
       }),
     );
     const sender = {
-      address: 'hello@demomailtrap.com',
-      name: 'Mailtrap Test',
+      address: MailConfig.SENDER.ADDRESS,
+      name: MailConfig.SENDER.NAME,
     };
     const recipientsEnv = this.configService.get<string>('MAIL_RECIPIENTS');
     if (!recipientsEnv) {
-      throw new Error(`MAIL_RECIPIENTS ${AuthErrors.ENV_VARIABLE_UNDEFINED}`);
+      throw new CustomUnauthorizedException(AuthErrors.ENV_VARIABLE_UNDEFINED);
     }
     const recipients = recipientsEnv.split(',').map((email) => email.trim());
     await transport.sendMail({
       from: sender,
       to: recipients,
-      subject: 'Verify Your Email',
-      text: `Please click the following link to verify your email: http://localhost:3000/auth/verify/${token}`,
+      subject: MailConfig.SUBJECTS.VERIFY_EMAIL,
+      text: MailConfig.SUBJECTS.TEXT + url,
     });
     return true;
   }
@@ -122,7 +132,9 @@ export class AuthService {
       }
       return { message: AuthMessages.USER_AUTHORIZED };
     } catch (error) {
-      throw new Error(`${AuthErrors.VERIFICATION_FAILED}: ${error}`);
+      throw new CustomUnauthorizedException(
+        `${AuthErrors.VERIFICATION_FAILED}: ${error}`,
+      );
     }
   }
 
@@ -136,7 +148,7 @@ export class AuthService {
       return null;
     }
     if (user.status == 'Unauthorized') {
-      throw new UnauthorizedException(AuthErrors.USER_UNAUTHORIZED);
+      throw new CustomUnauthorizedException(AuthErrors.USER_UNAUTHORIZED);
     }
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
@@ -148,12 +160,12 @@ export class AuthService {
   // verify otp service
   async verifyOpt(token: string, otp: string): Promise<boolean> {
     if (!token) {
-      throw new UnauthorizedException(AuthErrors.MISSING_2FA_TOKEN);
+      throw new CustomUnauthorizedException(AuthErrors.MISSING_2FA_TOKEN);
     }
     const userId = this.decodeTokenAndExtractUserId(token);
     const isTokenValid = await this.verifyTwoFactorToken(userId, otp);
     if (!isTokenValid) {
-      throw new UnauthorizedException(AuthErrors.INVALID_2FA_TOKEN);
+      throw new CustomUnauthorizedException(AuthErrors.INVALID_2FA_TOKEN);
     }
     return true;
   }
@@ -164,13 +176,13 @@ export class AuthService {
   ): Promise<{ secret: string; qrCode: string }> {
     const user = await this.userRepository.findUserById(userId);
     if (!user) {
-      throw new UnauthorizedException(AuthErrors.USER_NOT_FOUND);
+      throw new CustomUnauthorizedException(AuthErrors.USER_NOT_FOUND);
     }
     const secret = speakeasy.generateSecret({
-      name: `Job Management Portal (${user.email})`,
+      name: AuthConfig.APP_NAME + user.email,
     });
     if (!secret.otpauth_url) {
-      throw new Error('Failed to generate OTP authentication URL');
+      throw new CustomUnauthorizedException(AuthErrors.FAILED_GENERATE_URL);
     }
     const qrCode = await QRCode.toDataURL(secret.otpauth_url);
     await this.userRepository.updateUserTwoFactorSecret(userId, secret.base32);
@@ -187,19 +199,20 @@ export class AuthService {
         secret: this.configService.get<string>('JWT_SECRET'),
       });
       if (!decoded || !decoded.id) {
-        throw new UnauthorizedException('Invalid token: userId not found');
+        throw new CustomUnauthorizedException(AuthErrors.INVALID_TOKEN);
       }
       return decoded.id;
     } catch {
-      throw new UnauthorizedException('Invalid or expired token');
+      throw new CustomUnauthorizedException(AuthErrors.JWT_TOKEN_EXPIRED);
     }
   }
 
   // verify input secret with exiting secret
   async verifyTwoFactorToken(userId: string, token: string): Promise<boolean> {
     const user = await this.userRepository.findUserById(userId);
+    console.log(user);
     if (!user || !user.twoFactorSecret) {
-      throw new UnauthorizedException(AuthErrors.INVALID_2FA_SETUP);
+      throw new CustomUnauthorizedException(AuthErrors.INVALID_2FA_SETUP);
     }
     return speakeasy.totp.verify({
       secret: user.twoFactorSecret,
@@ -218,11 +231,48 @@ export class AuthService {
     };
     const secret = this.configService.get<string>('JWT_SECRET');
     if (!secret) {
-      throw new Error(AuthErrors.JWT_SECRET_UNDEFINED);
+      throw new CustomUnauthorizedException(AuthErrors.JWT_SECRET_UNDEFINED);
     }
     const token = jwt.sign(payload, secret, {
       expiresIn: AuthConfig.JWT_EXPIRATION,
     });
     return { access_token: token };
+  }
+
+  // Forgot Password - Send reset link via email
+  async sendPasswordResetLink(email: string): Promise<void> {
+    const user = await this.userRepository.findUserByEmail(email);
+    if (!user) {
+      throw new CustomUnauthorizedException(AuthErrors.USER_NOT_FOUND);
+    }
+
+    const token = this.jwtService.sign(
+      { id: user.id, email: user.email },
+      {
+        expiresIn: AuthConfig.TOKEN_EXPIRATION,
+        secret: this.configService.get<string>('JWT_SECRET'),
+      },
+    );
+
+    const url = this.configService.get<string>('FRONTEND_SERVER_URL') + token;
+
+    if (!url) {
+      throw new CustomUnauthorizedException(
+        AuthErrors.FRONTEND_FORGOT_PASSWORD_LINK_NOT_FOUND,
+      );
+    }
+    await this.sendVerificationEmail(email, token, url);
+  }
+
+  // Reset Password - Update password in the database
+  async resetPassword(email: string, newPassword: string): Promise<void> {
+    const user = await this.userRepository.findUserByEmail(email);
+    if (!user) {
+      throw new CustomUnauthorizedException(AuthErrors.USER_NOT_FOUND);
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    user.password = hashedPassword;
+    await user.save();
   }
 }

@@ -6,7 +6,7 @@ import { Cron } from '@nestjs/schedule';
 export class CronService {
   constructor(private readonly userService: UserService) {}
 
-  @Cron('* * * * *') // Runs once in every day minnight
+  @Cron('0 0 * * *') // Runs once in every day minnight
   async handleCron() {
     try {
       await this.userService.deleteUnauthorizedUsers();

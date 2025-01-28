@@ -8,6 +8,7 @@ import { Roles } from './entity/roles.entity';
 import { UserRepository } from './repository/user.repository';
 import { RoleRepository } from './repository/role.repository';
 import { ConfigService } from '@nestjs/config';
+import { AuthConfig } from './constants/auth.config';
 //import { AdminUserSeeder } from 'database/seeders/admin-user.seeder';
 //import { RoleSeeder } from 'database/seeders/role.seeder';
 
@@ -15,8 +16,8 @@ import { ConfigService } from '@nestjs/config';
   imports: [
     SequelizeModule.forFeature([Users, Roles]),
     JwtModule.register({
-      secret: 'yourSecretKey',
-      signOptions: { expiresIn: '5m' },
+      secret: AuthConfig.TOKEN_KEY,
+      signOptions: { expiresIn: AuthConfig.JWT_EXPIRATION },
     }),
   ],
   controllers: [AuthController],

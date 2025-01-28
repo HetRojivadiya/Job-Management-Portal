@@ -7,14 +7,18 @@ import {
 import { Request } from 'express';
 
 interface CustomRequest extends Request {
-  role?: string;
+  user?: {
+    id: string;
+    username: string;
+    role: string;
+  };
 }
 
 @Injectable()
 export class UserRoleGuard implements CanActivate {
   canActivate(context: ExecutionContext): boolean {
     const request = context.switchToHttp().getRequest<CustomRequest>();
-    const userRole = request.role;
+    const userRole = request.user?.role;
     const requiredRole = this.getRequiredRole(context);
 
     if (userRole !== requiredRole) {

@@ -11,6 +11,7 @@ import { ConfigService } from '@nestjs/config';
 interface JwtPayload {
   id: string;
   role: string;
+  email: string;
 }
 
 @Injectable()
@@ -34,7 +35,8 @@ export class JwtAuthGuard implements CanActivate {
       });
 
       if (decoded) {
-        request['role'] = decoded.role;
+        request['user'] = decoded;
+
         return true;
       } else {
         return false;

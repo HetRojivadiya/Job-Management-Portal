@@ -7,4 +7,6 @@ export const AuthRoutes = {
   VERIFY_OPT: 'verify-opt',
   ADMIN: 'admin',
   CANDIDATE: 'candidate',
+  FORGOT_PASSWORD: 'forgot-password',
+  RESET_PASSWORD: 'reset-password',
 } as const;

@@ -9,6 +9,7 @@ import {
   UnauthorizedException,
   Get,
   SetMetadata,
+  Request,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { SignupDto } from './dto/signup.dto';
@@ -25,6 +26,14 @@ import { UserRoleGuard } from './guards/user-type.guard';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { AuthConfig } from './constants/auth.config';
 
+interface RequestWithUser extends Request {
+  user: {
+    id: string;
+    role: string;
+    email: string;
+  };
+}
+
 @Controller(AuthRoutes.BASE)
 export class AuthController {
   constructor(
@@ -38,11 +47,12 @@ export class AuthController {
   @HttpCode(HttpStatus.CREATED)
   async signup(@Body() signupDto: SignupDto): Promise<ApiResponse<User>> {
     const result = await this.authService.signup(signupDto);
+
+    const responseData = { ...result.data, token: result.token };
     return {
       statusCode: HttpStatus.CREATED,
       message: AuthMessages.SIGNUP_SUCCESS,
-      data: result.data,
-      token: result.token,
+      data: responseData,
     };
   }
 
@@ -66,9 +76,7 @@ export class AuthController {
   @UseGuards(LoginValidationGuard)
   @Post(AuthRoutes.LOGIN)
   @HttpCode(HttpStatus.OK)
-  async login(
-    @Body() loginDto: LoginDto,
-  ): Promise<ApiResponse<User | { token: string }>> {
+  async login(@Body() loginDto: LoginDto): Promise<ApiResponse<User>> {
     try {
       const user = await this.authService.login(
         loginDto.username,
@@ -81,18 +89,20 @@ export class AuthController {
       if (!token) {
         throw new UnauthorizedException(AuthMessages.TOKEN_NOT_GENERATED);
       }
+      const responseData = {
+        token: token.access_token,
+      };
       if (user.twoFactorEnabled) {
         return {
           statusCode: HttpStatus.OK,
           message: AuthMessages.REDIRECT_OTP,
-          data: { token: token.access_token },
+          data: responseData,
         };
       }
       return {
         statusCode: HttpStatus.OK,
         message: AuthMessages.LOGIN_SUCCESS,
-        data: user,
-        token: token.access_token,
+        data: responseData,
       };
     } catch (error) {
       throw new UnauthorizedException(error);
@@ -104,12 +114,17 @@ export class AuthController {
   async verifyOptController(
     @Body(AuthConfig.TOKEN) token: string,
     @Body(AuthConfig.OTP) otp: string,
-  ) {
+  ): Promise<ApiResponse<string>> {
     const isValid = await this.authService.verifyOpt(token, otp);
     if (!isValid) {
       throw new UnauthorizedException(AuthErrors.INVALID_2FA_TOKEN);
     }
-    return { token };
+
+    return {
+      statusCode: HttpStatus.OK,
+      message: AuthMessages.OTP_VERIFIED_SUCCESSFULLY,
+      data: token,
+    };
   }
 
   // enable two factor auth via id
@@ -120,23 +135,55 @@ export class AuthController {
     return { qrCode, message: AuthMessages.TWO_FACTOR_SETUP_SUCCESS };
   }
 
+  // Forgot Password - send email with reset link
+  @Post(AuthRoutes.FORGOT_PASSWORD)
+  @HttpCode(HttpStatus.OK)
+  async forgotPassword(
+    @Body(AuthConfig.EMAIL) email: string,
+  ): Promise<ApiResponse<string>> {
+    await this.authService.sendPasswordResetLink(email);
+    return {
+      statusCode: HttpStatus.OK,
+      message: AuthMessages.PASSWORD_RESET_LINK_SENT,
+    };
+  }
+
+  // Reset Password - update password in the database
+  @UseGuards(JwtAuthGuard)
+  @Post(AuthRoutes.RESET_PASSWORD)
+  @HttpCode(HttpStatus.OK)
+  async resetPassword(
+    @Body(AuthConfig.NEW_PASSWORD) newPassword: string,
+    @Request() req: RequestWithUser,
+  ): Promise<ApiResponse<string>> {
+    await this.authService.resetPassword(req.user.email, newPassword);
+    return {
+      statusCode: HttpStatus.OK,
+      message: AuthMessages.PASSWORD_UPDATED_SUCCESSFULLY,
+    };
+  }
+
   // Admin only route
   @UseGuards(JwtAuthGuard, UserRoleGuard)
-  @SetMetadata('requiredRole', 'Admin')
+  @SetMetadata(AuthConfig.REQUIRED_ROLE, AuthConfig.ADMIN)
   @Get(AuthRoutes.ADMIN)
-  adminRoute() {
-    return {
+  @HttpCode(HttpStatus.OK)
+  adminRoute(): Promise<ApiResponse<string>> {
+    return Promise.resolve({
+      statusCode: HttpStatus.OK,
       message: AuthMessages.ADMIN_ACCESS,
-    };
+    });
   }
 
   // Candidate only route
   @UseGuards(JwtAuthGuard, UserRoleGuard)
-  @SetMetadata('requiredRole', 'Candidate')
+  @SetMetadata(AuthConfig.REQUIRED_ROLE, AuthConfig.CANDIDATE)
   @Get(AuthRoutes.CANDIDATE)
-  candidateRoute() {
-    return {
+  @HttpCode(HttpStatus.OK)
+  candidateRoute(): Promise<ApiResponse<string>> {
+    return Promise.resolve({
+      statusCode: HttpStatus.OK,
       message: AuthMessages.CANDIDATE_ACCESS,
-    };
+    });
   }
 }

@@ -10,4 +10,7 @@ export const AuthMessages = {
   REDIRECT_OTP: 'Redirect To OPT Page',
   ADMIN_ACCESS: 'Admin route accessed',
   CANDIDATE_ACCESS: 'Candidate route accessed',
+  PASSWORD_RESET_LINK_SENT: 'Password reset link has been sent to your email',
+  PASSWORD_UPDATED_SUCCESSFULLY: 'Password updated successfully',
+  OTP_VERIFIED_SUCCESSFULLY: 'Otp Verified Successfully',
 } as const;

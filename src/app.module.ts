@@ -5,6 +5,7 @@ import { ConfigModule } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
 import { UserModule } from './auth/cron-service/service/user.module';
 import { CronService } from './auth/cron-service/cron-service';
+import { DatabaseConfig } from './auth/constants/database.config';
 // import { Users } from './auth/entity/users.entity';
 // import { Roles } from './auth/entity/roles.entity';
 
@@ -12,15 +13,14 @@ import { CronService } from './auth/cron-service/cron-service';
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     SequelizeModule.forRoot({
-      dialect: 'postgres',
-      host: 'localhost',
-      port: 5432,
-      username: 'postgres',
-      password: 'het123',
-      database: 'Job Management Portal',
-      autoLoadModels: true,
-      synchronize: true,
-      //models: [Users, Roles],
+      dialect: DatabaseConfig.DIALECT,
+      host: DatabaseConfig.HOST,
+      port: DatabaseConfig.PORT,
+      username: DatabaseConfig.USERNAME,
+      password: DatabaseConfig.PASSWORD,
+      database: DatabaseConfig.DATABASE,
+      autoLoadModels: DatabaseConfig.AUTO_LOAD_MODELS,
+      synchronize: DatabaseConfig.SYNCHRONIZE,
     }),
     ScheduleModule.forRoot(),
     AuthModule,
