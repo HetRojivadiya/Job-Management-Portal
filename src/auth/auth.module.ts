@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { SequelizeModule } from '@nestjs/sequelize';
 import { JwtModule } from '@nestjs/jwt';
 import { AuthController } from './auth.controller';
@@ -9,6 +9,7 @@ import { UserRepository } from './repository/user.repository';
 import { RoleRepository } from './repository/role.repository';
 import { ConfigService } from '@nestjs/config';
 import { AuthConfig } from './constants/auth.config';
+import { AuthLoggerMiddleware } from 'src/auth.middleware';
 //import { AdminUserSeeder } from 'database/seeders/admin-user.seeder';
 //import { RoleSeeder } from 'database/seeders/role.seeder';
 
@@ -32,4 +33,8 @@ import { AuthConfig } from './constants/auth.config';
   ],
   exports: [AuthService],
 })
-export class AuthModule {}
+export class AuthModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(AuthLoggerMiddleware).forRoutes(AuthController);
+  }
+}
