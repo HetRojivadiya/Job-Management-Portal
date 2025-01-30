@@ -1,6 +1,6 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
-import { Roles } from '../../src/auth/entity/roles.entity';
+import { Roles } from '../../src/user/entity/roles.entity';
 import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()

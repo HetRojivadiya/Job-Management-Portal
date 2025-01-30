@@ -1,7 +1,7 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
-import { Users } from '../../src/auth/entity/users.entity';
-import { Roles } from '../../src/auth/entity/roles.entity';
+import { Users } from '../../src/user/entity/users.entity';
+import { Roles } from '../../src/user/entity/roles.entity';
 import * as bcrypt from 'bcrypt';
 import { v4 as uuidv4 } from 'uuid';
 

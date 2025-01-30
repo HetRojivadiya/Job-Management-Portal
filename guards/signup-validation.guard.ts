@@ -4,10 +4,10 @@ import {
   ExecutionContext,
   BadRequestException,
 } from '@nestjs/common';
-import { SignupDto } from '../dto/signup.dto';
+import { SignupDto } from '../src/auth/dto/signup.dto';
 
-import { UserRepository } from '../repository/user.repository';
-import { RoleRepository } from '../repository/role.repository';
+import { UserRepository } from '../src/user/repository/user.repository';
+import { RoleRepository } from '../src/user/repository/role.repository';
 
 @Injectable()
 export class SignupValidationGuard implements CanActivate {

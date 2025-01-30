@@ -1,36 +1,15 @@
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
-import { SequelizeModule } from '@nestjs/sequelize';
-import { JwtModule } from '@nestjs/jwt';
+
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
-import { Users } from './entity/users.entity';
-import { Roles } from './entity/roles.entity';
-import { UserRepository } from './repository/user.repository';
-import { RoleRepository } from './repository/role.repository';
-import { ConfigService } from '@nestjs/config';
-import { AuthConfig } from './constants/auth.config';
-import { AuthLoggerMiddleware } from 'src/auth.middleware';
-//import { AdminUserSeeder } from 'database/seeders/admin-user.seeder';
-//import { RoleSeeder } from 'database/seeders/role.seeder';
+
+import { AuthLoggerMiddleware } from 'src/app.middleware';
+import { UserModule } from 'src/user/user.module';
 
 @Module({
-  imports: [
-    SequelizeModule.forFeature([Users, Roles]),
-    JwtModule.register({
-      secret: AuthConfig.TOKEN_KEY,
-      signOptions: { expiresIn: AuthConfig.JWT_EXPIRATION },
-    }),
-  ],
+  imports: [UserModule],
   controllers: [AuthController],
-  providers: [
-    AuthService,
-    UserRepository,
-    RoleRepository,
-    ConfigService,
-
-    //AdminUserSeeder,
-    //RoleSeeder,
-  ],
+  providers: [AuthService],
   exports: [AuthService],
 })
 export class AuthModule implements NestModule {

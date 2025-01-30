@@ -21,6 +21,9 @@ export class UserRoleGuard implements CanActivate {
     const userRole = request.user?.role;
     const requiredRole = this.getRequiredRole(context);
 
+    console.log(userRole);
+    console.log(requiredRole);
+
     if (userRole !== requiredRole) {
       throw new ForbiddenException(
         'You do not have permission to access this resource.',

@@ -6,10 +6,10 @@ import * as bcrypt from 'bcrypt';
 import * as nodemailer from 'nodemailer';
 import { MailtrapTransport } from 'mailtrap';
 import { ConfigService } from '@nestjs/config';
-import { UserRepository } from './repository/user.repository';
-import { RoleRepository } from './repository/role.repository';
-import { Users } from './entity/users.entity';
-import * as jwt from 'jsonwebtoken';
+import { UserRepository } from '../user/repository/user.repository';
+import { RoleRepository } from '../user/repository/role.repository';
+import { Users } from '../user/entity/users.entity';
+
 import { Signup } from './response-interfaces/sigup.interface';
 import { User } from './response-interfaces/user.interface';
 import { AuthMessages } from './constants/auth.massages';
@@ -123,6 +123,7 @@ export class AuthService {
   async verifyUser(token: string) {
     try {
       const userId = this.decodeTokenAndExtractUserId(token);
+
       const updatedUser = await this.userRepository.updateUserStatus(
         userId,
         'Authorized',
@@ -139,13 +140,10 @@ export class AuthService {
   }
 
   // Login Service
-  async login(username: string, password: string): Promise<Users | null> {
-    const user = await Users.findOne({
-      where: { username },
-      include: [{ all: true }],
-    });
+  async login(email: string, password: string): Promise<Users | null> {
+    const user = await this.userRepository.findUserByEmail(email);
     if (!user) {
-      return null;
+      throw new CustomUnauthorizedException(AuthErrors.USER_NOT_FOUND);
     }
     if (user.status == 'Unauthorized') {
       throw new CustomUnauthorizedException(AuthErrors.USER_UNAUTHORIZED);
@@ -154,16 +152,13 @@ export class AuthService {
     if (!isPasswordValid) {
       return null;
     }
+
     return user;
   }
 
   // verify otp service
-  async verifyOpt(token: string, otp: string): Promise<boolean> {
-    if (!token) {
-      throw new CustomUnauthorizedException(AuthErrors.MISSING_2FA_TOKEN);
-    }
-    const userId = this.decodeTokenAndExtractUserId(token);
-    const isTokenValid = await this.verifyTwoFactorToken(userId, otp);
+  async verifyOpt(id: string, otp: string): Promise<boolean> {
+    const isTokenValid = await this.verifyTwoFactorToken(id, otp);
     if (!isTokenValid) {
       throw new CustomUnauthorizedException(AuthErrors.INVALID_2FA_TOKEN);
     }
@@ -192,6 +187,20 @@ export class AuthService {
     };
   }
 
+  // verify input secret with exiting secret
+  async verifyTwoFactorToken(userId: string, token: string): Promise<boolean> {
+    const user = await this.userRepository.findUserById(userId);
+    console.log(user);
+    if (!user || !user.twoFactorSecret) {
+      throw new CustomUnauthorizedException(AuthErrors.INVALID_2FA_SETUP);
+    }
+    return speakeasy.totp.verify({
+      secret: user.twoFactorSecret,
+      encoding: 'base32',
+      token,
+    });
+  }
+
   //decode the token and get userId
   decodeTokenAndExtractUserId(token: string): string {
     try {
@@ -207,35 +216,31 @@ export class AuthService {
     }
   }
 
-  // verify input secret with exiting secret
-  async verifyTwoFactorToken(userId: string, token: string): Promise<boolean> {
-    const user = await this.userRepository.findUserById(userId);
-    console.log(user);
-    if (!user || !user.twoFactorSecret) {
-      throw new CustomUnauthorizedException(AuthErrors.INVALID_2FA_SETUP);
-    }
-    return speakeasy.totp.verify({
-      secret: user.twoFactorSecret,
-      encoding: 'base32',
-      token,
-    });
-  }
-
   // Generate JWT Token
-  generateToken(user: Users): { access_token: string } {
+  async generateToken(user: Users): Promise<{ access_token: string }> {
+    const role = await this.roleRepository.findRoleById(user.roleId);
+    if (!role) {
+      throw new Error('Role not found');
+    }
+
     const payload = {
       id: user.id,
       username: user.username,
       email: user.email,
-      role: user.role.role,
+      role: role.role,
     };
+
     const secret = this.configService.get<string>('JWT_SECRET');
+
     if (!secret) {
-      throw new CustomUnauthorizedException(AuthErrors.JWT_SECRET_UNDEFINED);
+      throw new Error('JWT_SECRET is undefined');
     }
-    const token = jwt.sign(payload, secret, {
-      expiresIn: AuthConfig.JWT_EXPIRATION,
+
+    const token = this.jwtService.sign(payload, {
+      secret,
+      expiresIn: '1h',
     });
+
     return { access_token: token };
   }
 

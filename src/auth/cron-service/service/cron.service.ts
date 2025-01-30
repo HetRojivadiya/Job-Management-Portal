@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
-import { Users } from '../../entity/users.entity';
+import { Users } from '../../../user/entity/users.entity';
 import { Op } from 'sequelize'; // For date comparison
 
 @Injectable()
