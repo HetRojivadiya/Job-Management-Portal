@@ -9,7 +9,6 @@ import { ConfigService } from '@nestjs/config';
 import { UserRepository } from '../user/repository/user.repository';
 import { RoleRepository } from '../user/repository/role.repository';
 import { Users } from '../user/entity/users.entity';
-
 import { Signup } from './response-interfaces/sigup.interface';
 import { User } from './response-interfaces/user.interface';
 import { AuthMessages } from './constants/auth.massages';
@@ -190,7 +189,6 @@ export class AuthService {
   // verify input secret with exiting secret
   async verifyTwoFactorToken(userId: string, token: string): Promise<boolean> {
     const user = await this.userRepository.findUserById(userId);
-    console.log(user);
     if (!user || !user.twoFactorSecret) {
       throw new CustomUnauthorizedException(AuthErrors.INVALID_2FA_SETUP);
     }

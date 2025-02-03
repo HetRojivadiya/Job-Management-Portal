@@ -5,14 +5,18 @@ import {
   DataType,
   ForeignKey,
   BelongsTo,
-  CreatedAt,
-  UpdatedAt,
 } from 'sequelize-typescript';
-import { Job } from '../../user/entity/job.entity';
+import { Job } from '../../job/entity/job.entity';
 import { Skill } from './skills.entity';
 
+export interface JobSkillAttributes {
+  id?: string; // Optional, since it will be auto-generated
+  Job_id: string;
+  skills_id: string;
+}
+
 @Table({ tableName: 'Job_skill' })
-export class JobSkill extends Model<JobSkill> {
+export class JobSkill extends Model {
   @Column({
     type: DataType.UUID,
     allowNull: false,
@@ -40,12 +44,4 @@ export class JobSkill extends Model<JobSkill> {
 
   @BelongsTo(() => Skill)
   skill: Skill;
-
-  @CreatedAt
-  @Column({ type: DataType.DATE })
-  createdAt: Date;
-
-  @UpdatedAt
-  @Column({ type: DataType.DATE })
-  updatedAt: Date;
 }

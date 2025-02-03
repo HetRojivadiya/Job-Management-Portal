@@ -8,11 +8,20 @@ import {
   CreatedAt,
   UpdatedAt,
 } from 'sequelize-typescript';
-import { Users } from './users.entity'; // Adjust the path as needed
-import { Job } from './job.entity';
+import { Users } from '../../user/entity/users.entity';
+import { Job } from '../../job/entity/job.entity';
+
+interface JobApplicationCreationAttributes {
+  id: string;
+  JobId: string;
+  UserId: string;
+}
 
 @Table({ tableName: 'Job_Applications' })
-export class JobApplication extends Model<JobApplication> {
+export class JobApplication extends Model<
+  JobApplication,
+  JobApplicationCreationAttributes
+> {
   @Column({
     type: DataType.UUID,
     allowNull: false,
@@ -42,9 +51,9 @@ export class JobApplication extends Model<JobApplication> {
 
   @CreatedAt
   @Column({ type: DataType.DATE })
-  createdAt: Date;
+  createdAt?: Date;
 
   @UpdatedAt
   @Column({ type: DataType.DATE, allowNull: true })
-  updatedAt: Date;
+  updatedAt?: Date;
 }

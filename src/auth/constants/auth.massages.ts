@@ -13,4 +13,6 @@ export const AuthMessages = {
   PASSWORD_RESET_LINK_SENT: 'Password reset link has been sent to your email',
   PASSWORD_UPDATED_SUCCESSFULLY: 'Password updated successfully',
   OTP_VERIFIED_SUCCESSFULLY: 'Otp Verified Successfully',
+  PASSWORD_RESET_FAILED: 'Password Reset Failed',
+  PASSWORD_UPDATE_FAILED: 'Password Update Failed',
 } as const;

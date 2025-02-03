@@ -5,14 +5,12 @@ import {
   DataType,
   ForeignKey,
   BelongsTo,
-  CreatedAt,
-  UpdatedAt,
 } from 'sequelize-typescript';
 import { Users } from '../../user/entity/users.entity';
 import { Skill } from './skills.entity';
 
 @Table({ tableName: 'User_Skill' })
-export class UserSkill extends Model<UserSkill> {
+export class UserSkill extends Model {
   @Column({
     type: DataType.UUID,
     allowNull: false,
@@ -46,12 +44,4 @@ export class UserSkill extends Model<UserSkill> {
     allowNull: false,
   })
   proficiency_level: number;
-
-  @CreatedAt
-  @Column({ type: DataType.DATE })
-  createdAt: Date;
-
-  @UpdatedAt
-  @Column({ type: DataType.DATE })
-  updatedAt: Date;
 }

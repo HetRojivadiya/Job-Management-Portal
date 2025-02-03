@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { Users } from '../entity/users.entity';
+import { Roles } from '../entity/roles.entity';
 
 @Injectable()
 export class UserRepository {
@@ -49,5 +50,16 @@ export class UserRepository {
     }
 
     return null;
+  }
+
+  findUserWithRole(userId: string): Promise<Users | null> {
+    return this.usersModel.findOne({
+      where: { id: userId },
+      include: [
+        {
+          model: Roles,
+        },
+      ],
+    });
   }
 }

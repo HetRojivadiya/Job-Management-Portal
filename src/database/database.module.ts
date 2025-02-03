@@ -5,10 +5,24 @@ import { Roles } from '../user/entity/roles.entity';
 import { ConfigService } from '@nestjs/config';
 import { Dialect } from 'sequelize';
 import { Resume } from 'src/resume/entity/resume.entity';
+import { Job } from 'src/job/entity/job.entity';
+import { JobSkill } from 'src/skill/entity/job-skills.entity';
+import { Skill } from 'src/skill/entity/skills.entity';
+import { UserSkill } from 'src/skill/entity/user-skills.entity';
+import { JobApplication } from 'src/job-application/entity/job-applications.entity';
 
 @Module({
   imports: [
-    SequelizeModule.forFeature([Users, Roles, Resume]),
+    SequelizeModule.forFeature([
+      Users,
+      Roles,
+      Resume,
+      Job,
+      JobSkill,
+      Skill,
+      UserSkill,
+      JobApplication,
+    ]),
     SequelizeModule.forRootAsync({
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({

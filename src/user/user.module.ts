@@ -3,15 +3,15 @@ import { UserService } from './user.service';
 import { UserController } from './user.controller';
 import { UserRepository } from './repository/user.repository';
 import { RoleRepository } from './repository/role.repository';
-import { SequelizeModule } from '@nestjs/sequelize';
-import { Users } from './entity/users.entity';
-import { Roles } from './entity/roles.entity';
+import { DatabaseModule } from 'src/database/database.module';
+import { SkillModule } from 'src/skill/skill.module';
+import { ResumeModule } from 'src/resume/resume.module';
 
 //import { AdminUserSeeder } from 'database/seeders/admin-user.seeder';
 //import { RoleSeeder } from 'database/seeders/role.seeder';
 
 @Module({
-  imports: [SequelizeModule.forFeature([Users, Roles])],
+  imports: [DatabaseModule, SkillModule, ResumeModule],
   providers: [
     UserRepository,
     RoleRepository,
@@ -21,6 +21,6 @@ import { Roles } from './entity/roles.entity';
     //RoleSeeder,
   ],
   controllers: [UserController],
-  exports: [UserRepository, RoleRepository],
+  exports: [UserRepository, RoleRepository, UserService],
 })
 export class UserModule {}

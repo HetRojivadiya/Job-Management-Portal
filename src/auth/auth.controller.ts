@@ -9,8 +9,8 @@ import {
   Headers,
   UnauthorizedException,
   Get,
-  SetMetadata,
   Request,
+  BadRequestException,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { SignupDto } from './dto/signup.dto';
@@ -23,7 +23,6 @@ import { AuthMessages } from './constants/auth.massages';
 import { AuthErrors } from './constants/auth.errors';
 import { AuthRoutes } from './constants/auth.routes';
 import { UserRepository } from '../user/repository/user.repository';
-import { UserRoleGuard } from '../../guards/user-type.guard';
 import { JwtAuthGuard } from '../../guards/jwt-auth.guard';
 import { AuthConfig } from './constants/auth.config';
 import {
@@ -36,6 +35,7 @@ import {
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { RequestWithUser } from './request-with-user.interface';
+import { SwaggerConstants } from './constants/auth.swagger';
 
 @ApiTags('auth')
 @Controller(AuthRoutes.BASE)
@@ -46,76 +46,32 @@ export class AuthController {
   ) {}
 
   // Signup endpoint
-  @ApiOperation({ summary: 'Sign up a new user' })
+  @ApiOperation({ summary: SwaggerConstants.Signup.summary })
   @ApiBody({ type: SignupDto })
-  @SwaggerApiResponse({
-    status: 201,
-    description: 'Signup successful, please check your email for verification.',
-    schema: {
-      example: {
-        statusCode: 201,
-        message: 'Signup successful, please check your email for verification.',
-        data: {
-          data: {
-            status: 'Unauthorized',
-            twoFactorEnabled: false,
-            id: '795d97c7-8da4-4c0e-bb2c-8e54a5689a10',
-            username: 'het123',
-            password:
-              '$2b$10$JNyk8MuAWMfVDmxHlCrjCO2dwYw9lW/76WA7SflfgOSxNd8krj4ZS',
-            email: 'het3@gmail.com',
-            mobile: '1234567890',
-            roleId: '06cf5958-6fb1-451b-9e9a-1d7cb1e007f5',
-            updatedAt: '2025-01-30T08:36:14.904Z',
-            createdAt: '2025-01-30T08:36:14.904Z',
-            twoFactorSecret: null,
-          },
-          token:
-            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6Ijc5NWQ5N2M3LThkYTQtNGMwZS1iYjJjLThlNTRhNTY4OWExMCIsImlhdCI6MTczODIyNjE3NCwiZXhwIjoxNzM4MjI2NDc0fQ.Btho2ltjAmdlJSDgVq6DJRO-kHN1raWlwQfVq5pSOvs',
-        },
-      },
-    },
-  })
+  @SwaggerApiResponse(SwaggerConstants.Signup.response)
   @UseGuards(SignupValidationGuard)
   @Post(AuthRoutes.SIGNUP)
   @HttpCode(HttpStatus.CREATED)
   async signup(@Body() signupDto: SignupDto): Promise<ApiResponse<User>> {
-    const result = await this.authService.signup(signupDto);
+    try {
+      const result = await this.authService.signup(signupDto);
 
-    const responseData = { data: result.data, token: result.token };
-    return {
-      statusCode: HttpStatus.CREATED,
-      message: AuthMessages.SIGNUP_SUCCESS,
-      data: responseData,
-    };
+      const responseData = { data: result.data, token: result.token };
+      return {
+        statusCode: HttpStatus.CREATED,
+        message: AuthMessages.SIGNUP_SUCCESS,
+        data: responseData,
+      };
+    } catch {
+      throw new BadRequestException(AuthErrors.SIGNUP_FAILED);
+    }
   }
 
   // Verify endpoint
-  @ApiOperation({ summary: 'Verify the user with a token' })
-  @ApiParam({
-    name: AuthConfig.TOKEN,
-    required: true,
-    description: 'The token to verify the user',
-    type: String,
-  })
-  @SwaggerApiResponse({
-    status: 200,
-    description: 'User verification successful',
-    schema: {
-      example: {
-        message: AuthMessages.OTP_VERIFIED_SUCCESSFULLY,
-      },
-    },
-  })
-  @SwaggerApiResponse({
-    status: 400,
-    description: 'Invalid token or verification failed',
-    schema: {
-      example: {
-        message: `${AuthErrors.USER_VERIFICATION_FAILED}: <error-message>`,
-      },
-    },
-  })
+  @ApiOperation({ summary: SwaggerConstants.Verify.summary })
+  @ApiParam(SwaggerConstants.Verify.param)
+  @SwaggerApiResponse(SwaggerConstants.Verify.response.success)
+  @SwaggerApiResponse(SwaggerConstants.Verify.response.failure)
   @Get(AuthRoutes.VERIFY)
   @HttpCode(HttpStatus.OK)
   async verify(
@@ -125,40 +81,17 @@ export class AuthController {
       const result = await this.authService.verifyUser(token);
       return result;
     } catch (error) {
-      return {
-        message:
-          AuthErrors.USER_VERIFICATION_FAILED + ': ' + (error as Error).message,
-      };
+      throw new BadRequestException(
+        AuthErrors.USER_VERIFICATION_FAILED + ': ' + (error as Error).message,
+      );
     }
   }
 
   // Login endpoint
-  @ApiOperation({ summary: 'Login a user' })
+  @ApiOperation({ summary: SwaggerConstants.Login.summary })
   @ApiBody({ type: LoginDto })
-  @SwaggerApiResponse({
-    status: 200,
-    description: 'Login successful, returns access token',
-    schema: {
-      example: {
-        statusCode: 200,
-        message: AuthMessages.LOGIN_SUCCESS,
-        data: {
-          token: 'your-jwt-token-here',
-        },
-      },
-    },
-  })
-  @SwaggerApiResponse({
-    status: 401,
-    description: 'Invalid credentials or token generation failed',
-    schema: {
-      example: {
-        message: AuthMessages.INVALID_CREDENTIALS,
-        error: 'Unauthorized',
-        statusCode: 401,
-      },
-    },
-  })
+  @SwaggerApiResponse(SwaggerConstants.Login.response.success)
+  @SwaggerApiResponse(SwaggerConstants.Login.response.failure)
   @UseGuards(LoginValidationGuard)
   @Post(AuthRoutes.LOGIN)
   @HttpCode(HttpStatus.OK)
@@ -169,17 +102,15 @@ export class AuthController {
         loginDto.password,
       );
       if (!user) {
-        throw new UnauthorizedException(AuthMessages.INVALID_CREDENTIALS);
+        throw new BadRequestException(AuthMessages.INVALID_CREDENTIALS);
       }
-      const token = await this.authService.generateToken(user); // Ensure the method is awaited since it's asynchronous
+      const token = await this.authService.generateToken(user);
       if (!token || !token.access_token) {
-        throw new UnauthorizedException(AuthMessages.TOKEN_NOT_GENERATED);
+        throw new BadRequestException(AuthMessages.TOKEN_NOT_GENERATED);
       }
-
       const responseData = {
         token: token.access_token,
       };
-
       if (user.twoFactorEnabled) {
         return {
           statusCode: HttpStatus.OK,
@@ -192,40 +123,19 @@ export class AuthController {
         message: AuthMessages.LOGIN_SUCCESS,
         data: responseData,
       };
-    } catch (error) {
-      console.error('Login Error:', error);
-      throw new UnauthorizedException(error);
+    } catch {
+      throw new UnauthorizedException(AuthErrors.USER_CREATION_FAILED);
     }
   }
 
-  // verify otp
-  @ApiOperation({ summary: 'Verify OTP for user authentication' })
+  // Verify Otp
+  @ApiOperation({ summary: SwaggerConstants.VerifyOtp.summary })
   @ApiBody({
-    description: 'Body to verify OTP with a token',
+    description: SwaggerConstants.VerifyOtp.bodyDescription,
     type: Object,
   })
-  @SwaggerApiResponse({
-    status: 200,
-    description: 'OTP verified successfully.',
-    schema: {
-      example: {
-        statusCode: 200,
-        message: 'Otp Verified Successfully',
-        data: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjRiYmU1ZjA2LWYyMzQtNGJlZi04YzAxLTExZTc2MDIwMzEwZSIsInVzZXJuYW1lIjoiSGV0IFJvaml2YWRpeWEiLCJlbWFpbCI6ImhldHJvaml2YWRpeWE5OTlAZ21haWwuY29tIiwiaWF0IjoxNzM4MjMwNzQxLCJleHAiOjE3MzgyMzQzNDF9.Xuyz2f2jMaq8Ra7gNTD7eq5yka-er6fMRF9ta6flblg',
-      },
-    },
-  })
-  @SwaggerApiResponse({
-    status: 401,
-    description: 'Invalid two-factor authentication token.',
-    schema: {
-      example: {
-        statusCode: 401,
-        message: 'Invalid two-factor authentication token',
-        error: 'Unauthorized',
-      },
-    },
-  })
+  @SwaggerApiResponse(SwaggerConstants.VerifyOtp.response.success)
+  @SwaggerApiResponse(SwaggerConstants.VerifyOtp.response.failure)
   @UseGuards(JwtAuthGuard)
   @Post(AuthRoutes.VERIFY_OPT)
   async verifyOptController(
@@ -233,154 +143,91 @@ export class AuthController {
     @Body(AuthConfig.OTP) otp: string,
     @Request() req: RequestWithUser,
   ): Promise<ApiResponse<string>> {
-    const isValid = await this.authService.verifyOpt(req.user.id, otp);
-    const token = authHeader?.split(' ')[1];
-    if (!isValid) {
-      throw new UnauthorizedException(AuthErrors.INVALID_2FA_TOKEN);
+    try {
+      const isValid = await this.authService.verifyOpt(req.user.id, otp);
+      const token = authHeader?.split(' ')[1];
+      if (!isValid) {
+        throw new BadRequestException(AuthErrors.INVALID_2FA_TOKEN);
+      }
+      return {
+        statusCode: HttpStatus.OK,
+        message: AuthMessages.OTP_VERIFIED_SUCCESSFULLY,
+        data: token,
+      };
+    } catch {
+      throw new BadRequestException(AuthErrors.INVALID_2FA_TOKEN);
     }
-    return {
-      statusCode: HttpStatus.OK,
-      message: AuthMessages.OTP_VERIFIED_SUCCESSFULLY,
-      data: token,
-    };
   }
 
-  @ApiOperation({ summary: 'Enable two-factor authentication for a user' })
-  @SwaggerApiResponse({
-    status: 200,
-    description: 'Two-factor authentication setup successful',
-    schema: {
-      example: {
-        message: AuthMessages.TWO_FACTOR_SETUP_SUCCESS,
-        qrCode: 'data:image/png;base64,iVBORw0KGgoAAAANS...==', // Example QR Code image data (Base64 encoded)
-      },
-    },
-  })
-  @SwaggerApiResponse({
-    status: 401,
-    description: 'Unauthorized or Invalid token',
-    schema: {
-      example: {
-        message: 'Unauthorized',
-        error: 'Unauthorized',
-        statusCode: 401,
-      },
-    },
-  })
+  //Enable 2FA route
+  @ApiOperation({ summary: SwaggerConstants.EnableTwoFactor.summary })
+  @SwaggerApiResponse(SwaggerConstants.EnableTwoFactor.response.success)
+  @SwaggerApiResponse(SwaggerConstants.EnableTwoFactor.response.failure)
   @UseGuards(JwtAuthGuard)
   @Post(AuthRoutes.ENABLE_2FA)
   async enableTwoFactor(@Request() req: RequestWithUser) {
-    const { qrCode } = await this.authService.generateTwoFactorSecret(
-      req.user.id,
-    );
-    return {
-      qrCode,
-      message: AuthMessages.TWO_FACTOR_SETUP_SUCCESS,
-    };
+    try {
+      const { qrCode } = await this.authService.generateTwoFactorSecret(
+        req.user.id,
+      );
+      return {
+        qrCode,
+        message: AuthMessages.TWO_FACTOR_SETUP_SUCCESS,
+      };
+    } catch {
+      throw new BadRequestException(AuthErrors.VERIFICATION_FAILED);
+    }
   }
+
   // Forgot Password - send email with reset link
-  @ApiOperation({ summary: "Send password reset link to the user's email" })
+  @ApiOperation({ summary: SwaggerConstants.ForgotPassword.summary })
   @ApiBody({
-    description: 'The email of the user who requested the password reset link',
+    description: SwaggerConstants.ForgotPassword.bodyDescription,
     type: ForgotPasswordDto,
   })
-  @SwaggerApiResponse({
-    status: 200,
-    description: 'Password reset link sent successfully',
-    schema: {
-      example: {
-        statusCode: 200,
-        message: AuthMessages.PASSWORD_RESET_LINK_SENT,
-      },
-    },
-  })
-  @SwaggerApiResponse({
-    status: 400,
-    description: 'Invalid email or user not found',
-    schema: {
-      example: {
-        statusCode: 400,
-        message: 'Invalid email or user not found',
-        error: 'Bad Request',
-      },
-    },
-  })
-  @HttpCode(HttpStatus.OK)
+  @SwaggerApiResponse(SwaggerConstants.ForgotPassword.response.success)
+  @SwaggerApiResponse(SwaggerConstants.ForgotPassword.response.failure)
   @Post(AuthRoutes.FORGOT_PASSWORD)
+  @HttpCode(HttpStatus.OK)
   async forgotPassword(
     @Body() forgotPasswordDto: ForgotPasswordDto,
   ): Promise<ApiResponse<string>> {
-    await this.authService.sendPasswordResetLink(forgotPasswordDto.email);
-    return {
-      statusCode: HttpStatus.OK,
-      message: AuthMessages.PASSWORD_RESET_LINK_SENT,
-    };
+    try {
+      await this.authService.sendPasswordResetLink(forgotPasswordDto.email);
+      return {
+        statusCode: HttpStatus.OK,
+        message: AuthMessages.PASSWORD_RESET_LINK_SENT,
+      };
+    } catch {
+      throw new BadRequestException(AuthMessages.PASSWORD_RESET_FAILED);
+    }
   }
 
   // Reset Password - update password in the database
-  @ApiOperation({ summary: 'Reset user password' })
+  @ApiOperation({ summary: SwaggerConstants.ResetPassword.summary })
   @ApiBody({
-    description: 'The new password to update for the user',
-    type: ResetPasswordDto,
+    description: SwaggerConstants.ResetPassword.bodyDescription,
+    type: ForgotPasswordDto,
   })
-  @SwaggerApiResponse({
-    status: 200,
-    description: 'Password updated successfully',
-    schema: {
-      example: {
-        statusCode: 200,
-        message: AuthMessages.PASSWORD_UPDATED_SUCCESSFULLY,
-      },
-    },
-  })
-  @SwaggerApiResponse({
-    status: 401,
-    description: 'Unauthorized - Invalid token or user not authorized',
-    schema: {
-      example: {
-        statusCode: 401,
-        message: AuthErrors.USER_UNAUTHORIZED,
-      },
-    },
-  })
-  @UseGuards(JwtAuthGuard)
+  @SwaggerApiResponse(SwaggerConstants.ResetPassword.response.success)
+  @SwaggerApiResponse(SwaggerConstants.ResetPassword.response.failure)
   @Post(AuthRoutes.RESET_PASSWORD)
   @HttpCode(HttpStatus.OK)
   async resetPassword(
     @Body() resetPasswordDto: ResetPasswordDto,
     @Request() req: RequestWithUser,
   ): Promise<ApiResponse<string>> {
-    await this.authService.resetPassword(
-      req.user.email,
-      resetPasswordDto.newPassword,
-    );
-    return {
-      statusCode: HttpStatus.OK,
-      message: AuthMessages.PASSWORD_UPDATED_SUCCESSFULLY,
-    };
-  }
-
-  // Admin only route
-  @UseGuards(JwtAuthGuard, UserRoleGuard)
-  @SetMetadata(AuthConfig.REQUIRED_ROLE, AuthConfig.ADMIN)
-  @Get(AuthRoutes.ADMIN)
-  @HttpCode(HttpStatus.OK)
-  adminRoute(): Promise<ApiResponse<string>> {
-    return Promise.resolve({
-      statusCode: HttpStatus.OK,
-      message: AuthMessages.ADMIN_ACCESS,
-    });
-  }
-
-  // Candidate only route
-  @UseGuards(JwtAuthGuard, UserRoleGuard)
-  @SetMetadata(AuthConfig.REQUIRED_ROLE, AuthConfig.CANDIDATE)
-  @Get(AuthRoutes.CANDIDATE)
-  @HttpCode(HttpStatus.OK)
-  candidateRoute(): Promise<ApiResponse<string>> {
-    return Promise.resolve({
-      statusCode: HttpStatus.OK,
-      message: AuthMessages.CANDIDATE_ACCESS,
-    });
+    try {
+      await this.authService.resetPassword(
+        req.user.email,
+        resetPasswordDto.newPassword,
+      );
+      return {
+        statusCode: HttpStatus.OK,
+        message: AuthMessages.PASSWORD_UPDATED_SUCCESSFULLY,
+      };
+    } catch {
+      throw new BadRequestException(AuthMessages.PASSWORD_UPDATE_FAILED);
+    }
   }
 }

@@ -34,8 +34,6 @@ export class JwtAuthGuard implements CanActivate {
         secret: this.configService.get<string>('JWT_SECRET'),
       });
 
-      console.log(decoded);
-
       if (decoded) {
         request['user'] = {
           id: decoded.id,

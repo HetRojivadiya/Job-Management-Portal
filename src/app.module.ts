@@ -16,6 +16,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { AuthConfig } from './auth/constants/auth.config';
 
 import { DatabaseModule } from './database/database.module';
+import { JobApplicationModule } from './job-application/job-application.module';
 
 @Module({
   imports: [
@@ -36,6 +37,7 @@ import { DatabaseModule } from './database/database.module';
     SkillModule,
     ResumeModule,
     DatabaseModule,
+    JobApplicationModule,
   ],
   providers: [CronService, ResumeService],
 })

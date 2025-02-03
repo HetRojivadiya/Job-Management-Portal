@@ -5,13 +5,11 @@ import {
   DataType,
   ForeignKey,
   BelongsTo,
-  CreatedAt,
-  UpdatedAt,
 } from 'sequelize-typescript';
-import { Users } from './users.entity';
+import { Users } from '../../user/entity/users.entity';
 
 @Table({ tableName: 'Jobs' })
-export class Job extends Model<Job> {
+export class Job extends Model {
   @Column({
     type: DataType.UUID,
     allowNull: false,
@@ -65,11 +63,17 @@ export class Job extends Model<Job> {
   })
   deadline: Date;
 
-  @CreatedAt
-  @Column({ type: DataType.DATE })
-  createdAt: Date;
+  @Column({
+    type: DataType.DATE,
+    allowNull: true,
+    defaultValue: DataType.NOW, // Automatically sets `createdAt` to the current date
+  })
+  createdAt?: Date;
 
-  @UpdatedAt
-  @Column({ type: DataType.DATE })
-  updatedAt: Date;
+  @Column({
+    type: DataType.DATE,
+    allowNull: true,
+    defaultValue: DataType.NOW, // Automatically sets `updatedAt` to the current date
+  })
+  updatedAt?: Date;
 }

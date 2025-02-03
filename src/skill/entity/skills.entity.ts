@@ -1,14 +1,7 @@
-import {
-  Model,
-  Table,
-  Column,
-  DataType,
-  CreatedAt,
-  UpdatedAt,
-} from 'sequelize-typescript';
+import { Model, Table, Column, DataType } from 'sequelize-typescript';
 
 @Table({ tableName: 'Skills' })
-export class Skill extends Model<Skill> {
+export class Skill extends Model {
   @Column({
     type: DataType.UUID,
     allowNull: false,
@@ -22,12 +15,4 @@ export class Skill extends Model<Skill> {
     allowNull: false,
   })
   skillName: string;
-
-  @CreatedAt
-  @Column({ type: DataType.DATE })
-  createdAt: Date;
-
-  @UpdatedAt
-  @Column({ type: DataType.DATE })
-  updatedAt: Date;
 }
