@@ -4,4 +4,5 @@ export const MESSAGES = {
   FILE_DELETE_SUCCESS: 'Resume deleted successfully.',
   FILE_UPDATE_SUCCESS: 'Resume updated successfully.',
   FILE_NOT_FOUND: 'Resume not found.',
+  RESUME: 'resume',
 };

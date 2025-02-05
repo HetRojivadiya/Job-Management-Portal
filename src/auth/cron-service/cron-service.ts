@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { UserService } from './service/cron.service';
 import { Cron } from '@nestjs/schedule';
 
@@ -11,7 +11,7 @@ export class CronService {
     try {
       await this.userService.deleteUnauthorizedUsers();
     } catch (error) {
-      console.error('Error in cron job:', error);
+      throw new BadRequestException(error);
     }
   }
 }

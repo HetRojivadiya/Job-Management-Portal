@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { SignupDto } from './dto/signup.dto';
 import { JwtService } from '@nestjs/jwt';
 import { v4 as uuidv4 } from 'uuid';
@@ -218,7 +218,7 @@ export class AuthService {
   async generateToken(user: Users): Promise<{ access_token: string }> {
     const role = await this.roleRepository.findRoleById(user.roleId);
     if (!role) {
-      throw new Error('Role not found');
+      throw new BadRequestException();
     }
 
     const payload = {
@@ -231,12 +231,12 @@ export class AuthService {
     const secret = this.configService.get<string>('JWT_SECRET');
 
     if (!secret) {
-      throw new Error('JWT_SECRET is undefined');
+      throw new BadRequestException();
     }
 
     const token = this.jwtService.sign(payload, {
       secret,
-      expiresIn: '1h',
+      expiresIn: AuthConfig.JWT_EXPIRATION,
     });
 
     return { access_token: token };

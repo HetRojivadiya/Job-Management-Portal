@@ -8,6 +8,7 @@ import { SignupDto } from '../src/auth/dto/signup.dto';
 
 import { UserRepository } from '../src/user/repository/user.repository';
 import { RoleRepository } from '../src/user/repository/role.repository';
+import { ERROR_MESSAGES } from './constants';
 
 @Injectable()
 export class SignupValidationGuard implements CanActivate {
@@ -21,32 +22,28 @@ export class SignupValidationGuard implements CanActivate {
     const signupDto = request.body as unknown as SignupDto;
 
     if (!signupDto.username || signupDto.username.length < 3) {
-      throw new BadRequestException(
-        'Username must be at least 3 characters long',
-      );
+      throw new BadRequestException(ERROR_MESSAGES.USERNAME_LENGTH);
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!signupDto.email || !emailRegex.test(signupDto.email)) {
-      throw new BadRequestException('Invalid email format');
+      throw new BadRequestException(ERROR_MESSAGES.INVALID_EMAIL_FORMAT);
     }
 
     const mobileRegex = /^\d{10}$/;
     if (!signupDto.mobile || !mobileRegex.test(signupDto.mobile)) {
-      throw new BadRequestException('Mobile number must be 10 digits');
+      throw new BadRequestException(ERROR_MESSAGES.INVALID_MOBILE);
     }
 
     const existingUser = await this.userRepository.findUserByEmail(
       signupDto.email,
     );
     if (existingUser) {
-      throw new BadRequestException('User already exists with this email.');
+      throw new BadRequestException(ERROR_MESSAGES.USER_ALREADY_EXISTS);
     }
 
     if (!signupDto.password || signupDto.password.length < 8) {
-      throw new BadRequestException(
-        'Password must be at least 8 characters long',
-      );
+      throw new BadRequestException(ERROR_MESSAGES.PASSWORD_LENGTH);
     }
 
     return true;

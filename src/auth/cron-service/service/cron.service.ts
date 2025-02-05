@@ -19,8 +19,6 @@ export class UserService {
         },
       },
     });
-
-    console.log(`${deletedCount} unauthorized users deleted.`);
     return deletedCount;
   }
 }

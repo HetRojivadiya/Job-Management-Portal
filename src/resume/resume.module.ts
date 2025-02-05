@@ -9,6 +9,6 @@ import { DatabaseModule } from 'src/database/database.module';
   imports: [DatabaseModule],
   controllers: [ResumeController],
   providers: [ResumeService, ResumeRepository],
-  exports: [ResumeRepository],
+  exports: [ResumeRepository, ResumeService],
 })
 export class ResumeModule {}

@@ -31,7 +31,6 @@ export class JobApplicationRepository {
     });
   }
 
-  // Add other repository methods as needed
   async findByUserId(userId: string): Promise<JobApplication[]> {
     return this.jobApplicationModel.findAll({
       where: {

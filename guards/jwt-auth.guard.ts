@@ -26,7 +26,7 @@ export class JwtAuthGuard implements CanActivate {
     const token = request.headers.authorization?.split(' ')[1];
 
     if (!token) {
-      throw new UnauthorizedException('Token not found');
+      throw new UnauthorizedException();
     }
 
     try {
@@ -37,7 +37,7 @@ export class JwtAuthGuard implements CanActivate {
       if (decoded) {
         request['user'] = {
           id: decoded.id,
-          role: decoded.role, // Attach role to user
+          role: decoded.role,
           email: decoded.email,
         };
         return true;
@@ -45,7 +45,7 @@ export class JwtAuthGuard implements CanActivate {
         return false;
       }
     } catch (error) {
-      throw new UnauthorizedException(`Invalid or expired token ${error}`);
+      throw new UnauthorizedException(error);
     }
   }
 }

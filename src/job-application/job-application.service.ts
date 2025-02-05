@@ -11,6 +11,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { ERROR_MESSAGES } from './constants/error.constants';
 import { JobService } from 'src/job/job.service';
 import { UserService } from 'src/user/user.service';
+import { ResumeService } from 'src/resume/resume.service';
 
 @Injectable()
 export class JobApplicationService {
@@ -20,9 +21,17 @@ export class JobApplicationService {
     private readonly userSkillRepository: UserSkillRepository,
     private readonly jobService: JobService,
     private readonly userService: UserService,
+    private readonly resumeService: ResumeService,
   ) {}
 
-  async applyForJob(userId: string, jobId: string): Promise<void> {
+  async applyForJob(
+    userId: string,
+    jobId: string,
+    file: Express.Multer.File,
+  ): Promise<void> {
+    if (file) {
+      await this.resumeService.uploadResume(userId, file);
+    }
     const jobSkills = await this.jobSkillRepository.findByJobId(jobId);
     if (jobSkills.length === 0) {
       throw new NotFoundException(ERROR_MESSAGES.JOB_NOT_FOUND);
@@ -67,7 +76,7 @@ export class JobApplicationService {
         }),
       );
 
-      return appliedJobs.filter((job) => job !== null); // Filter out any null results
+      return appliedJobs.filter((job) => job !== null);
     } catch {
       throw new NotFoundException(ERROR_MESSAGES.APPLICATIONS_NOT_FOUND);
     }
@@ -108,7 +117,7 @@ export class JobApplicationService {
 
       return applicantsWithProfiles;
     } catch {
-      throw new BadRequestException('An unexpected error occurred');
+      throw new BadRequestException();
     }
   }
 }

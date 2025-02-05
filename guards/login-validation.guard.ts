@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import { AuthService } from '../src/auth/auth.service';
 import { LoginDto } from '../src/auth/dto/login.dto';
+import { ERROR_MESSAGES } from './constants';
 
 @Injectable()
 export class LoginValidationGuard implements CanActivate {
@@ -17,16 +18,16 @@ export class LoginValidationGuard implements CanActivate {
     const body = request.body as unknown as LoginDto;
 
     if (!body.email || body.email.trim().length === 0) {
-      throw new BadRequestException('Email is required.');
+      throw new BadRequestException(ERROR_MESSAGES.EMAIL_REQUIRED);
     }
 
     if (!body.password || body.password.trim().length === 0) {
-      throw new BadRequestException('Password is required.');
+      throw new BadRequestException(ERROR_MESSAGES.PASSWORD_REQUIRED);
     }
 
     const user = await this.authService.login(body.email, body.password);
     if (!user) {
-      throw new UnauthorizedException('Invalid credentials.');
+      throw new UnauthorizedException(ERROR_MESSAGES.INVALID_CREDENTIALS);
     }
 
     return true;

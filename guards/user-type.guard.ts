@@ -5,6 +5,7 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { Request } from 'express';
+import { ERROR_MESSAGES } from './constants';
 
 interface CustomRequest extends Request {
   user?: {
@@ -26,9 +27,7 @@ export class UserRoleGuard implements CanActivate {
     }
 
     if (userRole !== requiredRole) {
-      throw new ForbiddenException(
-        'You do not have permission to access this resource.',
-      );
+      throw new ForbiddenException(ERROR_MESSAGES.PERMISSIONS);
     }
 
     return true;

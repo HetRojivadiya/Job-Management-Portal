@@ -9,6 +9,8 @@ import {
   UseInterceptors,
   Get,
   SetMetadata,
+  HttpException,
+  HttpStatus,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ResumeService } from './resume.service';
@@ -23,6 +25,8 @@ import {
   ApiResponse as SwaggerApiResponse,
 } from '@nestjs/swagger';
 import { SwaggerConstants } from './constants/swagger.constants';
+import { MESSAGES } from './constants/messages';
+import { ErrorMessages } from './constants/error-messages.constants';
 
 @UseGuards(JwtAuthGuard, UserRoleGuard)
 @Controller(ROUTES.RESUME)
@@ -35,7 +39,17 @@ export class ResumeController {
   @SetMetadata(AuthConfig.REQUIRED_ROLE, AuthConfig.CANDIDATE)
   @Get()
   async getResume(@Req() req: RequestWithUser) {
-    return await this.resumeService.getResume(req.user.id);
+    try {
+      return await this.resumeService.getResume(req.user.id);
+    } catch (error: unknown) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new HttpException(
+        ErrorMessages.FAILED_TO_RETRIEVE,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
   }
 
   @ApiOperation({ summary: SwaggerConstants.UploadResume.summary })
@@ -43,12 +57,28 @@ export class ResumeController {
   @SwaggerApiResponse(SwaggerConstants.UploadResume.response.failure)
   @SetMetadata(AuthConfig.REQUIRED_ROLE, AuthConfig.CANDIDATE)
   @Post(ROUTES.UPLOAD)
-  @UseInterceptors(FileInterceptor('resume', multerConfig))
+  @UseInterceptors(FileInterceptor(MESSAGES.RESUME, multerConfig))
   async uploadResume(
     @Req() req: RequestWithUser,
     @UploadedFile() file: Express.Multer.File,
   ) {
-    return await this.resumeService.uploadResume(req.user.id, file);
+    try {
+      if (!file) {
+        throw new HttpException(
+          ErrorMessages.NO_FILE_UPLOADED,
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+      return await this.resumeService.uploadResume(req.user.id, file);
+    } catch (error: unknown) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new HttpException(
+        ErrorMessages.FAILED_TO_UPLOAD,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
   }
 
   @ApiOperation({ summary: SwaggerConstants.DeleteResume.summary })
@@ -57,7 +87,17 @@ export class ResumeController {
   @SetMetadata(AuthConfig.REQUIRED_ROLE, AuthConfig.CANDIDATE)
   @Delete(ROUTES.DELETE)
   async deleteResume(@Req() req: RequestWithUser) {
-    return await this.resumeService.deleteResume(req.user.id);
+    try {
+      return await this.resumeService.deleteResume(req.user.id);
+    } catch (error: unknown) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new HttpException(
+        ErrorMessages.FAILED_TO_DELETE,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
   }
 
   @ApiOperation({ summary: SwaggerConstants.UpdateResume.summary })
@@ -65,11 +105,23 @@ export class ResumeController {
   @SwaggerApiResponse(SwaggerConstants.UpdateResume.response.failure)
   @SetMetadata(AuthConfig.REQUIRED_ROLE, AuthConfig.CANDIDATE)
   @Put(ROUTES.UPDATE)
-  @UseInterceptors(FileInterceptor('resume', multerConfig))
+  @UseInterceptors(FileInterceptor(MESSAGES.RESUME, multerConfig))
   async updateResume(
     @Req() req: RequestWithUser,
     @UploadedFile() file: Express.Multer.File,
   ) {
-    return await this.resumeService.updateResume(req.user.id, file);
+    try {
+      if (!file) {
+        throw new HttpException(
+          ErrorMessages.NO_FILE_UPLOADED,
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+      return await this.resumeService.updateResume(req.user.id, file);
+    } catch (error: unknown) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+    }
   }
 }

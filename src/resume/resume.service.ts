@@ -1,7 +1,7 @@
 import {
+  BadRequestException,
   Injectable,
   NotFoundException,
-  UnauthorizedException,
 } from '@nestjs/common';
 import { ResumeRepository } from './repository/resume.repository';
 import { CreateResumeDto } from './dto/resume.types';
@@ -28,7 +28,7 @@ export class ResumeService {
   async uploadResume(userId: string, file: Express.Multer.File) {
     const existingResume = await this.resumeRepository.findByUserId(userId);
     if (existingResume) {
-      throw new UnauthorizedException(ErrorMessages.RESUME_ALREADY_EXISTS);
+      throw new BadRequestException(ErrorMessages.RESUME_ALREADY_EXISTS);
     }
     const resumeData: CreateResumeDto = {
       user_id: userId,
@@ -59,8 +59,8 @@ export class ResumeService {
     if (existingResume) {
       try {
         await unlinkAsync(existingResume.system_path);
-      } catch (error) {
-        console.error('Error deleting old resume file:', error);
+      } catch (err) {
+        throw new BadRequestException(err);
       }
       const resumeData: Partial<CreateResumeDto> = {
         name: file.originalname,

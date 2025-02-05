@@ -6,9 +6,10 @@ import { JobModule } from 'src/job/job.module';
 import { UserModule } from 'src/user/user.module';
 import { JobApplicationRepository } from './repository/job-application.repository';
 import { SkillModule } from 'src/skill/skill.module';
+import { ResumeModule } from 'src/resume/resume.module';
 
 @Module({
-  imports: [DatabaseModule, JobModule, UserModule, SkillModule],
+  imports: [DatabaseModule, JobModule, UserModule, SkillModule, ResumeModule],
   providers: [JobApplicationService, JobApplicationRepository],
   controllers: [JobApplicationController],
   exports: [JobApplicationService, JobApplicationRepository],

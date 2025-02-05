@@ -42,16 +42,20 @@ export class JobController {
   async createJob(
     @Body() createJobDto: CreateJobDto,
     @Req() req: RequestWithUser,
-  ): Promise<Job> {
+  ): Promise<{ statusCode: number; message: string; data: Job }> {
     try {
-      return await this.jobService.createJob(createJobDto, req.user.id);
+      const job = await this.jobService.createJob(createJobDto, req.user.id);
+      return {
+        statusCode: 201,
+        message: 'Job created successfully',
+        data: job,
+      };
     } catch {
       throw new UnauthorizedException(ERROR_MESSAGES.JOB_CREATION_ERROR);
     }
   }
 
   @ApiOperation({ summary: SwaggerConstants.UpdateJob.summary })
-  @ApiParam({ name: 'id', type: 'string', description: 'Job ID' })
   @ApiBody({ type: UpdateJobDto })
   @SwaggerApiResponse(SwaggerConstants.UpdateJob.response.success)
   @SwaggerApiResponse(SwaggerConstants.UpdateJob.response.failure)
@@ -100,7 +104,6 @@ export class JobController {
   }
 
   @ApiOperation({ summary: SwaggerConstants.GetJobById.summary })
-  @ApiParam({ name: 'id', type: 'string', description: 'Job ID' })
   @SwaggerApiResponse(SwaggerConstants.GetJobById.response.success)
   @SwaggerApiResponse(SwaggerConstants.GetJobById.response.failure)
   @Get(':id')
