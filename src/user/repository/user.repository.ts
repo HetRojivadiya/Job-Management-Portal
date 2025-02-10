@@ -28,6 +28,17 @@ export class UserRepository {
     }
     return null;
   }
+  async updatePopupStatus(id: string): Promise<Users | null> {
+    const user = await this.findUserById(id);
+    if (user) {
+      user.isPopup = false;
+      user.twoFactorSecret = '';
+      user.twoFactorEnabled = false;
+      await user.save();
+      return user;
+    }
+    return null;
+  }
 
   async deleteUser(id: string): Promise<boolean> {
     const deletedCount = await this.usersModel.destroy({

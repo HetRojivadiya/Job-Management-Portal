@@ -7,14 +7,19 @@ import {
 import { SignupDto } from '../src/auth/dto/signup.dto';
 
 import { UserRepository } from '../src/user/repository/user.repository';
-import { RoleRepository } from '../src/user/repository/role.repository';
 import { ERROR_MESSAGES } from './constants';
+import { AuthService } from 'src/auth/auth.service';
+import { ConfigService } from '@nestjs/config';
+import { JwtService } from '@nestjs/jwt';
+import { AuthConfig } from 'src/auth/constants/auth.config';
 
 @Injectable()
 export class SignupValidationGuard implements CanActivate {
   constructor(
     private readonly userRepository: UserRepository,
-    private readonly roleRepository: RoleRepository,
+    private readonly authService: AuthService,
+    private readonly configService: ConfigService,
+    private readonly jwtService: JwtService,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -35,17 +40,44 @@ export class SignupValidationGuard implements CanActivate {
       throw new BadRequestException(ERROR_MESSAGES.INVALID_MOBILE);
     }
 
-    const existingUser = await this.userRepository.findUserByEmail(
-      signupDto.email,
-    );
-    if (existingUser) {
-      throw new BadRequestException(ERROR_MESSAGES.USER_ALREADY_EXISTS);
-    }
-
     if (!signupDto.password || signupDto.password.length < 8) {
       throw new BadRequestException(ERROR_MESSAGES.PASSWORD_LENGTH);
     }
 
+    const secret = this.configService.get<string>('JWT_SECRET');
+    if (!secret) {
+      throw new BadRequestException(ERROR_MESSAGES.JWT_SECRET_UNDEFINED);
+    }
+
+    const existingUser = await this.userRepository.findUserByEmail(
+      signupDto.email,
+    );
+    if (existingUser) {
+      if (existingUser.status === 'Authorized') {
+        throw new BadRequestException(
+          ERROR_MESSAGES.USER_ALREADY_EXISTS_AND_AUTHORIZED,
+        );
+      }
+
+      const token = this.jwtService.sign(
+        { id: existingUser.id },
+        {
+          expiresIn: AuthConfig.TOKEN_EXPIRATION,
+          secret: secret,
+        },
+      );
+
+      const url = this.configService.get<string>('VERIFY_USER_URL') + token;
+
+      await this.authService.sendVerificationEmail(
+        existingUser.email,
+        token,
+        url,
+      );
+      throw new BadRequestException(
+        ERROR_MESSAGES.USER_ALREADY_EXISTS_BUT_UNAUTHORIZED,
+      );
+    }
     return true;
   }
 }

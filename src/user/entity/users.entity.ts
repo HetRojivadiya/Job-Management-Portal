@@ -68,6 +68,13 @@ export class Users extends Model {
   })
   twoFactorSecret: string;
 
+  @Column({
+    type: DataType.BOOLEAN,
+    allowNull: false,
+    defaultValue: true,
+  })
+  isPopup: boolean;
+
   @BelongsTo(() => Roles)
   role: Roles;
 }

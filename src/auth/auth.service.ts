@@ -35,6 +35,11 @@ export class AuthService {
 
   // Signup Service
   async signup(signupDto: SignupDto): Promise<Signup<User>> {
+    const secret = this.configService.get<string>('JWT_SECRET');
+    if (!secret) {
+      throw new CustomUnauthorizedException(AuthErrors.JWT_SECRET_UNDEFINED);
+    }
+
     const hashedPassword = await bcrypt.hash(signupDto.password, 10);
     const role = await this.roleRepository.findRoleByName(AuthConfig.ROLE_NAME);
     if (!role) {
@@ -51,11 +56,6 @@ export class AuthService {
 
     if (!newUser) {
       throw new CustomUnauthorizedException(AuthErrors.USER_CREATION_FAILED);
-    }
-
-    const secret = this.configService.get<string>('JWT_SECRET');
-    if (!secret) {
-      throw new CustomUnauthorizedException(AuthErrors.JWT_SECRET_UNDEFINED);
     }
 
     const token = this.jwtService.sign(
@@ -86,7 +86,7 @@ export class AuthService {
   }
 
   // Send Verification Email
-  private async sendVerificationEmail(
+  async sendVerificationEmail(
     email: string,
     token: string,
     url: string,
@@ -144,9 +144,6 @@ export class AuthService {
     if (!user) {
       throw new CustomUnauthorizedException(AuthErrors.USER_NOT_FOUND);
     }
-    if (user.status == 'Unauthorized') {
-      throw new CustomUnauthorizedException(AuthErrors.USER_UNAUTHORIZED);
-    }
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
       return null;
@@ -186,6 +183,11 @@ export class AuthService {
     };
   }
 
+  async disableTwoFactorAuthentication(userId: string): Promise<Users | null> {
+    const user = await this.userRepository.updatePopupStatus(userId);
+    return user;
+  }
+
   // verify input secret with exiting secret
   async verifyTwoFactorToken(userId: string, token: string): Promise<boolean> {
     const user = await this.userRepository.findUserById(userId);
@@ -215,7 +217,9 @@ export class AuthService {
   }
 
   // Generate JWT Token
-  async generateToken(user: Users): Promise<{ access_token: string }> {
+  async generateToken(
+    user: Users,
+  ): Promise<{ access_token: string; role: string }> {
     const role = await this.roleRepository.findRoleById(user.roleId);
     if (!role) {
       throw new BadRequestException();
@@ -239,7 +243,7 @@ export class AuthService {
       expiresIn: AuthConfig.JWT_EXPIRATION,
     });
 
-    return { access_token: token };
+    return { access_token: token, role: role.role };
   }
 
   // Forgot Password - Send reset link via email

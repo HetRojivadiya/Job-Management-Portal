@@ -4,6 +4,7 @@ export const AuthRoutes = {
   LOGIN: 'login',
   VERIFY: 'verify/:token',
   ENABLE_2FA: 'enable-2fa',
+  DISABLE_2FA: 'disable-2fa',
   VERIFY_OPT: 'verify-opt',
   ADMIN: 'admin',
   CANDIDATE: 'candidate',

@@ -10,6 +10,7 @@ import {
   UnauthorizedException,
   Get,
   Request,
+  Res,
   BadRequestException,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
@@ -25,6 +26,7 @@ import { AuthRoutes } from './constants/auth.routes';
 import { UserRepository } from '../user/repository/user.repository';
 import { JwtAuthGuard } from '../../guards/jwt-auth.guard';
 import { AuthConfig } from './constants/auth.config';
+import { Response } from 'express';
 import {
   ApiBody,
   ApiOperation,
@@ -36,6 +38,7 @@ import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { RequestWithUser } from './request-with-user.interface';
 import { SwaggerConstants } from './constants/auth.swagger';
+import { Users } from 'src/user/entity/users.entity';
 
 @ApiTags('auth')
 @Controller(AuthRoutes.BASE)
@@ -74,12 +77,11 @@ export class AuthController {
   @SwaggerApiResponse(SwaggerConstants.Verify.response.failure)
   @Get(AuthRoutes.VERIFY)
   @HttpCode(HttpStatus.OK)
-  async verify(
-    @Param(AuthConfig.TOKEN) token: string,
-  ): Promise<{ message: string }> {
+  async verify(@Param(AuthConfig.TOKEN) token: string, @Res() res: Response) {
     try {
-      const result = await this.authService.verifyUser(token);
-      return result;
+      await this.authService.verifyUser(token);
+
+      return res.redirect('http://localhost:4200/auth/verify-success');
     } catch (error) {
       throw new BadRequestException(
         AuthErrors.USER_VERIFICATION_FAILED + ': ' + (error as Error).message,
@@ -110,11 +112,20 @@ export class AuthController {
       }
       const responseData = {
         token: token.access_token,
+        role: token.role,
+        twoFactorEnabled: user.twoFactorEnabled,
+        isPopup: user.isPopup,
       };
       if (user.twoFactorEnabled) {
         return {
           statusCode: HttpStatus.OK,
           message: AuthMessages.REDIRECT_OTP,
+          data: responseData,
+        };
+      } else if (!user.twoFactorEnabled && user.isPopup) {
+        return {
+          statusCode: HttpStatus.OK,
+          message: 'PopUp',
           data: responseData,
         };
       }
@@ -176,6 +187,33 @@ export class AuthController {
       };
     } catch {
       throw new BadRequestException(AuthErrors.VERIFICATION_FAILED);
+    }
+  }
+
+  //Disable 2FA
+  // @ApiOperation({ summary: SwaggerConstants.EnableTwoFactor.summary })
+  // @SwaggerApiResponse(SwaggerConstants.EnableTwoFactor.response.success)
+  // @SwaggerApiResponse(SwaggerConstants.EnableTwoFactor.response.failure)
+  @UseGuards(JwtAuthGuard)
+  @Post(AuthRoutes.DISABLE_2FA)
+  async disableTwoFactor(
+    @Request() req: RequestWithUser,
+  ): Promise<ApiResponse<Users | null>> {
+    try {
+      const user = await this.authService.disableTwoFactorAuthentication(
+        req.user.id,
+      );
+
+      if (!user) {
+        throw new BadRequestException(AuthErrors.DISABLE_FAILED);
+      }
+      return {
+        statusCode: 200,
+        message: AuthMessages.TWO_FACTOR_SETUP_DISABLE,
+        data: user,
+      };
+    } catch {
+      throw new BadRequestException(AuthErrors.DISABLE_FAILED);
     }
   }
 
