@@ -5,6 +5,7 @@ export interface UserProfileResponse {
   mobile: string;
   status: string;
   role: string;
+  createdAt?: string | Date;
   skills: UserSkillResponse[];
   resume?: ResumeResponse;
 }

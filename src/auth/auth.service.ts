@@ -119,12 +119,10 @@ export class AuthService {
   }
 
   // Verify User
-  async verifyUser(token: string) {
+  async verifyUser(id: string) {
     try {
-      const userId = this.decodeTokenAndExtractUserId(token);
-
       const updatedUser = await this.userRepository.updateUserStatus(
-        userId,
+        id,
         'Authorized',
       );
       if (!updatedUser) {

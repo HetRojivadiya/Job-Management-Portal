@@ -4,4 +4,5 @@ export const UserRoutes = {
   DELETE_SKILLS: 'delete-skills',
   GET_SKILLS: 'get-skills',
   GET_USER_PROFILE: 'get-user-profile',
+  GET_ALL_USERS: 'get-all-users',
 };

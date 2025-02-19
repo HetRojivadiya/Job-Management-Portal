@@ -21,12 +21,23 @@ export class JobApplicationRepository {
 
   async findByUserAndJob(
     userId: string,
-    applicationId: string,
+    jobId: string,
   ): Promise<JobApplication | null> {
     return this.jobApplicationModel.findOne({
       where: {
         UserId: userId,
-        id: applicationId,
+        id: jobId,
+      },
+    });
+  }
+  async findByUserAndApplication(
+    userId: string,
+    apllicationId: string,
+  ): Promise<JobApplication | null> {
+    return this.jobApplicationModel.findOne({
+      where: {
+        UserId: userId,
+        id: apllicationId,
       },
     });
   }

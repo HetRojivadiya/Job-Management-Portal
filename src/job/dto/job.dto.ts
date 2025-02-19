@@ -19,3 +19,7 @@ export class UpdateJobDto {
   deadline?: Date;
   skills?: string[];
 }
+
+export class recommandedJob {
+  userId: string;
+}

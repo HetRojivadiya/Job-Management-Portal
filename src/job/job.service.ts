@@ -11,6 +11,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { Job } from './entity/job.entity';
 import { Skill } from 'src/skill/entity/skills.entity';
 import { ERROR_MESSAGES } from './constants/error-messages.constants';
+import { UserSkillRepository } from 'src/skill/repository/user-skill.repository';
 
 export interface JobWithSkills extends Job {
   skills: Skill[];
@@ -22,6 +23,7 @@ export class JobService {
     private readonly jobRepository: JobRepository,
     private readonly skillRepository: SkillRepository,
     private readonly jobSkillRepository: JobSkillRepository,
+    private readonly userSkillRepository: UserSkillRepository,
   ) {}
 
   async createJob(createJobDto: CreateJobDto, id: string) {
@@ -133,6 +135,22 @@ export class JobService {
       if (error instanceof NotFoundException) {
         throw error;
       }
+      throw new UnauthorizedException(ERROR_MESSAGES.JOB_FETCH_ERROR);
+    }
+  }
+
+  async getRecommandedJob(userId: string): Promise<JobWithSkills[]> {
+    try {
+      const userSkills = await this.userSkillRepository.findByUserId(userId);
+      const userSkillIds = userSkills.map((skill) => skill.skills_id);
+      const allJobs = await this.findAll();
+
+      const recommendedJobs = allJobs.filter((job) =>
+        job.skills.some((skill) => userSkillIds.includes(skill.id)),
+      );
+
+      return recommendedJobs;
+    } catch {
       throw new UnauthorizedException(ERROR_MESSAGES.JOB_FETCH_ERROR);
     }
   }

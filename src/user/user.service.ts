@@ -94,6 +94,15 @@ export class UserService {
       const userSkills: UserSkillResponse[] = await this.getUserSkills(userId);
       const resume = await this.resumeRepository.findByUserId(userId);
 
+      let formattedCreatedAt: string;
+      if (user.createdAt instanceof Date) {
+        formattedCreatedAt = user.createdAt.toISOString();
+      } else if (typeof user.createdAt === 'string') {
+        formattedCreatedAt = user.createdAt;
+      } else {
+        formattedCreatedAt = new Date().toISOString(); // Fallback if somehow undefined
+      }
+
       return {
         userId: user.id,
         username: user.username,
@@ -102,6 +111,7 @@ export class UserService {
         status: user.status,
         role: user.role.role,
         skills: userSkills,
+        createdAt: formattedCreatedAt,
         resume: resume
           ? {
               id: resume.id,
@@ -116,6 +126,45 @@ export class UserService {
       console.error('Error fetching user profile:', error);
       throw new UnauthorizedException(
         ERROR_MESSAGES.USER_PROFILE_RETRIEVAL_ERROR,
+      );
+    }
+  }
+
+  async getAllUserProfiles(): Promise<UserProfileResponse[]> {
+    try {
+      const users = await this.userRepository.findAllUsersWithRoles();
+
+      return await Promise.all(
+        users.map(async (user) => {
+          const userSkills: UserSkillResponse[] = await this.getUserSkills(
+            user.id,
+          );
+          const resume = await this.resumeRepository.findByUserId(user.id);
+
+          return {
+            userId: user.id,
+            username: user.username,
+            email: user.email,
+            mobile: user.mobile,
+            status: user.status,
+            role: user.role.role,
+            skills: userSkills,
+            resume: resume
+              ? {
+                  id: resume.id,
+                  name: resume.name,
+                  system_path: resume.system_path,
+                  createdAt: resume.createdAt,
+                  updatedAt: resume.updatedAt,
+                }
+              : undefined,
+          };
+        }),
+      );
+    } catch (error) {
+      console.error('Error fetching all user profiles:', error);
+      throw new UnauthorizedException(
+        ERROR_MESSAGES.ALL_USER_PROFILES_RETRIEVAL_ERROR,
       );
     }
   }

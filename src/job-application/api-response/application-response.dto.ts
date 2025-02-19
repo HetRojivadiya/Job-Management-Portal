@@ -1,8 +1,7 @@
-// dto/application-response.dto.ts
 export interface ApplicationResponse {
   applicationId: string;
   userId: string;
-  userName: string; // assuming userName is a string
+  userName: string;
   jobId: string;
-  jobTitle: string; // assuming jobTitle is a string
+  jobTitle: string;
 }

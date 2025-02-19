@@ -1,6 +1,6 @@
 export const JobApplicationRoutes = {
   BASE: 'job-application',
   APPLY: 'apply',
-  APPLIED: 'applied',
+  APPLIED: 'applied/:userId',
   GET_APPLICANTS: 'applicants',
 };

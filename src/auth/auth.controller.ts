@@ -8,10 +8,10 @@ import {
   UseGuards,
   Headers,
   UnauthorizedException,
-  Get,
   Request,
-  Res,
   BadRequestException,
+  Req,
+  Get,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { SignupDto } from './dto/signup.dto';
@@ -26,7 +26,6 @@ import { AuthRoutes } from './constants/auth.routes';
 import { UserRepository } from '../user/repository/user.repository';
 import { JwtAuthGuard } from '../../guards/jwt-auth.guard';
 import { AuthConfig } from './constants/auth.config';
-import { Response } from 'express';
 import {
   ApiBody,
   ApiOperation,
@@ -75,13 +74,17 @@ export class AuthController {
   @ApiParam(SwaggerConstants.Verify.param)
   @SwaggerApiResponse(SwaggerConstants.Verify.response.success)
   @SwaggerApiResponse(SwaggerConstants.Verify.response.failure)
-  @Get(AuthRoutes.VERIFY)
+  @Post(AuthRoutes.VERIFY)
   @HttpCode(HttpStatus.OK)
-  async verify(@Param(AuthConfig.TOKEN) token: string, @Res() res: Response) {
+  @UseGuards(JwtAuthGuard)
+  async verify(
+    @Param(AuthConfig.TOKEN) token: string,
+    @Req() req: RequestWithUser,
+  ) {
     try {
-      await this.authService.verifyUser(token);
+      await this.authService.verifyUser(req.user.id);
 
-      return res.redirect('http://localhost:4200/auth/verify-success');
+      return { status: true };
     } catch (error) {
       throw new BadRequestException(
         AuthErrors.USER_VERIFICATION_FAILED + ': ' + (error as Error).message,
@@ -266,6 +269,26 @@ export class AuthController {
       };
     } catch {
       throw new BadRequestException(AuthMessages.PASSWORD_UPDATE_FAILED);
+    }
+  }
+
+  @Get('check-role')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(JwtAuthGuard)
+  checkRole(@Request() req: RequestWithUser): ApiResponse<string> {
+    {
+      if (req.user) {
+        return {
+          statusCode: HttpStatus.OK,
+          message: AuthMessages.ROLE_CHECK_SUCCESSFULLY,
+          data: req.user.role,
+        };
+      }
+      return {
+        statusCode: HttpStatus.BAD_REQUEST,
+        message: AuthMessages.ROLE_CHECK_SUCCESSFULLY,
+        data: '',
+      };
     }
   }
 }

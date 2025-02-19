@@ -44,6 +44,9 @@ export class JobController {
     @Req() req: RequestWithUser,
   ): Promise<{ statusCode: number; message: string; data: Job }> {
     try {
+      await this.jobService.getRecommandedJob(
+        '8d65b27a-0690-41cd-a488-986dbbf36c57',
+      );
       const job = await this.jobService.createJob(createJobDto, req.user.id);
       return {
         statusCode: 201,
@@ -101,6 +104,14 @@ export class JobController {
     } catch {
       throw new UnauthorizedException(ERROR_MESSAGES.JOB_FETCH_ERROR);
     }
+  }
+
+  @Get('recommended')
+  @SetMetadata(AuthConfig.REQUIRED_ROLE, AuthConfig.CANDIDATE)
+  async getRecommendedJobs(
+    @Req() req: RequestWithUser,
+  ): Promise<JobWithSkills[]> {
+    return this.jobService.getRecommandedJob(req.user.id);
   }
 
   @ApiOperation({ summary: SwaggerConstants.GetJobById.summary })

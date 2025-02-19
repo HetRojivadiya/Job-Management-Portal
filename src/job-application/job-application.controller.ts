@@ -13,6 +13,7 @@ import {
   SetMetadata,
   HttpException,
   HttpStatus,
+  Param,
 } from '@nestjs/common';
 import { JobApplicationService } from './job-application.service';
 import { JwtAuthGuard } from 'guards/jwt-auth.guard';
@@ -75,11 +76,10 @@ export class JobApplicationController {
   @SwaggerApiResponse(SwaggerConstants.GetAppliedJobs.response.success)
   @SwaggerApiResponse(SwaggerConstants.GetAppliedJobs.response.failure)
   @Get(JobApplicationRoutes.APPLIED)
-  async getAppliedJobs(@Req() req: RequestWithUser) {
+  async getAppliedJobs(@Param('userId') userId: string) {
     try {
-      const appliedJobs = await this.jobApplicationService.getAppliedJobs(
-        req.user.id,
-      );
+      const appliedJobs =
+        await this.jobApplicationService.getAppliedJobs(userId);
 
       return {
         statusCode: HttpStatus.OK,
@@ -100,15 +100,15 @@ export class JobApplicationController {
   @ApiOperation({ summary: SwaggerConstants.DeleteAppliedJob.summary })
   @SwaggerApiResponse(SwaggerConstants.DeleteAppliedJob.response.success)
   @SwaggerApiResponse(SwaggerConstants.DeleteAppliedJob.response.failure)
-  @Delete()
+  @Delete(':applicationId')
   async deleteAppliedJob(
-    @Body() body: { applicationId: string },
+    @Param('applicationId') applicationId: string,
     @Req() req: RequestWithUser,
   ) {
     try {
       await this.jobApplicationService.deleteAppliedJob(
         req.user.id,
-        body.applicationId,
+        applicationId,
       );
 
       return {

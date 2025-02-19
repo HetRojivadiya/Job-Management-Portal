@@ -26,6 +26,8 @@ export class JwtAuthGuard implements CanActivate {
 
     const token = request.headers.authorization?.split(' ')[1];
 
+    console.log(token);
+
     if (!token) {
       throw new UnauthorizedException();
     }
@@ -41,6 +43,7 @@ export class JwtAuthGuard implements CanActivate {
           role: decoded.role,
           email: decoded.email,
         };
+
         return true;
       } else {
         return false;

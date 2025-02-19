@@ -9,6 +9,7 @@ import {
   Delete,
   Get,
   NotFoundException,
+  Param,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { JwtAuthGuard } from 'guards/jwt-auth.guard';
@@ -99,12 +100,12 @@ export class UserController {
   @ApiOperation({ summary: SwaggerConstants.GetUserProfile.summary })
   @SwaggerApiResponse(SwaggerConstants.GetUserProfile.response.success)
   @SwaggerApiResponse(SwaggerConstants.GetUserProfile.response.failure)
-  @Get(UserRoutes.GET_USER_PROFILE)
+  @Get(UserRoutes.GET_USER_PROFILE + '/:userId')
   async getUserProfile(
-    @Req() req: RequestWithUser,
+    @Param('userId') userId: string,
   ): Promise<ApiResponse<UserProfileResponse>> {
     try {
-      const userProfile = await this.userService.getUserProfile(req.user.id);
+      const userProfile = await this.userService.getUserProfile(userId);
       return {
         statusCode: 200,
         message: UserMessages.USER_PROFILE_RETRIEVED_SUCCESS,
@@ -113,6 +114,26 @@ export class UserController {
     } catch {
       throw new UnauthorizedException(
         ERROR_MESSAGES.USER_PROFILE_RETRIEVAL_ERROR,
+      );
+    }
+  }
+
+  // @ApiOperation({ summary: SwaggerConstants.GetAllUserProfiles.summary })
+  // @SwaggerApiResponse(SwaggerConstants.GetAllUserProfiles.response.success)
+  // @SwaggerApiResponse(SwaggerConstants.GetAllUserProfiles.response.failure)
+  @Get(UserRoutes.GET_ALL_USERS) // Define the new route
+  async getAllUserProfiles(): Promise<ApiResponse<UserProfileResponse[]>> {
+    try {
+      const userProfiles = await this.userService.getAllUserProfiles();
+      return {
+        statusCode: 200,
+        message: UserMessages.ALL_USER_PROFILES_RETRIEVED_SUCCESS,
+        data: userProfiles,
+      };
+    } catch (error) {
+      console.error('Error fetching all user profiles:', error);
+      throw new UnauthorizedException(
+        ERROR_MESSAGES.ALL_USER_PROFILES_RETRIEVAL_ERROR,
       );
     }
   }

@@ -73,4 +73,14 @@ export class UserRepository {
       ],
     });
   }
+
+  findAllUsersWithRoles(): Promise<Users[]> {
+    return this.usersModel.findAll({
+      include: [
+        {
+          model: Roles,
+        },
+      ],
+    });
+  }
 }

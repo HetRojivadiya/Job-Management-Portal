@@ -30,7 +30,7 @@ export class JobApplicationService {
     file: Express.Multer.File,
   ): Promise<void> {
     if (file) {
-      await this.resumeService.uploadResume(userId, file);
+      await this.resumeService.updateResume(userId, file);
     }
     const jobSkills = await this.jobSkillRepository.findByJobId(jobId);
     if (jobSkills.length === 0) {
@@ -84,7 +84,7 @@ export class JobApplicationService {
 
   async deleteAppliedJob(userId: string, applicationId: string): Promise<void> {
     const existingApplication =
-      await this.jobApplicationRepository.findByUserAndJob(
+      await this.jobApplicationRepository.findByUserAndApplication(
         userId,
         applicationId,
       );

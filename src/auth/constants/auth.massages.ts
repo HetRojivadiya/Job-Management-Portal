@@ -16,4 +16,5 @@ export const AuthMessages = {
   OTP_VERIFIED_SUCCESSFULLY: 'Otp Verified Successfully',
   PASSWORD_RESET_FAILED: 'Password Reset Failed',
   PASSWORD_UPDATE_FAILED: 'Password Update Failed',
+  ROLE_CHECK_SUCCESSFULLY: 'Role retrieve successfully',
 } as const;
