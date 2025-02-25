@@ -1,0 +1,22 @@
+export const AuthMessages = {
+  SIGNUP_SUCCESS:
+    'Signup successful, please check your email for verification.',
+  LOGIN_SUCCESS: 'Login successful',
+  INVALID_CREDENTIALS: 'Invalid credentials',
+  TOKEN_NOT_GENERATED: 'Token is not Generated',
+  EMAIL_VERIFICATION_FAILED: 'Verification email could not be sent.',
+  USER_AUTHORIZED: 'User authorized successfully.',
+  TWO_FACTOR_SETUP_SUCCESS: 'Two-factor authentication enabled successfully',
+  TWO_FACTOR_SETUP_DISABLE: 'Two-factor authentication disable successfully',
+  REDIRECT_OTP: 'Redirect To OPT Page',
+  ADMIN_ACCESS: 'Admin route accessed',
+  CANDIDATE_ACCESS: 'Candidate route accessed',
+  PASSWORD_RESET_LINK_SENT: 'Password reset link has been sent to your email',
+  PASSWORD_UPDATED_SUCCESSFULLY: 'Password updated successfully',
+  OTP_VERIFIED_SUCCESSFULLY: 'Otp Verified Successfully',
+  PASSWORD_RESET_FAILED: 'Password Reset Failed',
+  PASSWORD_UPDATE_FAILED: 'Password Update Failed',
+  ROLE_CHECK_SUCCESSFULLY: 'Role retrieve successfully',
+  ROLE_CHECK_UNSUCCESSFULLY: 'Role retrieve Unsuccessfully',
+  USER_VERIFICATION_SUCCESS: 'User Verification Success',
+} as const;
