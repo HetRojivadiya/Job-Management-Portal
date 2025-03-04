@@ -38,7 +38,6 @@ import { SwaggerConstants } from './constants/auth.swagger';
 import { SignupResponse } from './response/signup-response.interface';
 import { SigninResponse } from './response/signin-response.interface';
 import { ApiResponse } from 'src/common/api.response';
-import { ROUTES } from '@nestjs/core/router/router-module';
 
 @ApiTags(AuthRoutes.BASE)
 @Controller(AuthRoutes.BASE)
@@ -70,7 +69,7 @@ export class AuthController {
         message: AuthMessages.SIGNUP_SUCCESS,
         data: result,
       };
-    } catch (error) {
+    } catch (error :  unknown) {
       throw error;
     }
   }
@@ -93,7 +92,7 @@ export class AuthController {
         statusCode: HttpStatus.OK,
         message: AuthMessages.USER_VERIFICATION_SUCCESS,
       };
-    } catch (error) {
+    } catch (error : unknown) {
       throw error;
     }
   }
@@ -119,7 +118,7 @@ export class AuthController {
         message: AuthMessages.LOGIN_SUCCESS,
         data: result,
       };
-    } catch (error) {
+    } catch (error :  unknown) {
       throw error;
     }
   }
@@ -150,7 +149,7 @@ export class AuthController {
         message: AuthMessages.OTP_VERIFIED_SUCCESSFULLY,
         data: token,
       };
-    } catch (error) {
+    } catch (error :  unknown) {
       throw error;
     }
   }
@@ -172,7 +171,7 @@ export class AuthController {
         qrCode,
         message: AuthMessages.TWO_FACTOR_SETUP_SUCCESS,
       };
-    } catch (error) {
+    } catch (error :  unknown) {
       throw error;
     }
   }
@@ -192,7 +191,7 @@ export class AuthController {
         statusCode: HttpStatus.OK,
         message: AuthMessages.TWO_FACTOR_SETUP_DISABLE,
       };
-    } catch (error) {
+    } catch (error :  unknown) {
       throw error;
     }
   }
@@ -216,7 +215,7 @@ export class AuthController {
         statusCode: HttpStatus.OK,
         message: AuthMessages.PASSWORD_RESET_LINK_SENT,
       };
-    } catch (error) {
+    } catch (error :  unknown) {
       throw error;
     }
   }
@@ -244,7 +243,7 @@ export class AuthController {
         statusCode: HttpStatus.OK,
         message: AuthMessages.PASSWORD_UPDATED_SUCCESSFULLY,
       };
-    } catch (error) {
+    } catch (error :  unknown) {
       throw error;
     }
   }
@@ -272,7 +271,7 @@ export class AuthController {
         statusCode: HttpStatus.BAD_REQUEST,
         message: AuthMessages.ROLE_CHECK_UNSUCCESSFULLY,
       };
-    } catch (error) {
+    } catch (error :  unknown) {
       throw error;
     }
   }

@@ -17,5 +17,7 @@ export interface JobSkill {
     createdAt?: string | Date;
     updatedAt?: string | Date;
     skills?: JobSkill[];
+    status: string;
+    rejectionMessage? :string;
   }
   

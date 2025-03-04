@@ -23,15 +23,10 @@ export class JwtAuthGuard implements CanActivate {
 
   canActivate(context: ExecutionContext): boolean {
     const request = context.switchToHttp().getRequest<Request>();
-
     const token = request.headers.authorization?.split(' ')[1];
-
-    console.log(token);
-
     if (!token) {
       throw new UnauthorizedException();
     }
-
     try {
       const decoded = this.jwtService.verify<JwtPayload>(token, {
         secret: this.configService.get<string>('JWT_SECRET'),

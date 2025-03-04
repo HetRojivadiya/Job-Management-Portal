@@ -1,13 +1,20 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { Job } from '../entity/job.entity';
+import { Sequelize } from 'sequelize-typescript';
+import { QueryTypes } from 'sequelize';
+
+interface MonthlyCountResult {
+  monthNumber: string;
+  count: string;
+}
 
 @Injectable()
 export class JobRepository {
-  sequelize: any;
   constructor(
     @InjectModel(Job)
     private readonly jobModel: typeof Job,
+    private readonly sequelize: Sequelize,
   ) {}
 
   async createJob(createJobDto: Partial<Job>): Promise<Job> {
@@ -33,5 +40,28 @@ export class JobRepository {
 
   async findAll(): Promise<Job[]> {
     return this.jobModel.findAll();
+  }
+
+  async getJobCountByMonths(year: string): Promise<number[]> {
+    const monthCounts = new Array(12).fill(0);
+    const query = `
+      SELECT 
+        EXTRACT(MONTH FROM "createdAt") AS "monthNumber", 
+        COUNT(*) AS count 
+      FROM "${this.jobModel.tableName}" 
+      WHERE EXTRACT(YEAR FROM "createdAt") = :year 
+      GROUP BY "monthNumber" 
+      ORDER BY "monthNumber"
+    `;
+    const monthlyResults = await this.sequelize.query(query, {
+      replacements: { year },
+      type: QueryTypes.SELECT, 
+    }) as MonthlyCountResult[]; 
+  
+    monthlyResults.forEach(result => {
+      const monthIndex = parseInt(result.monthNumber) - 1;
+      monthCounts[monthIndex] = parseInt(result.count);
+    });
+    return monthCounts;
   }
 }

@@ -75,7 +75,7 @@ export class AuthService {
         );
       }
       return { user: newUser };
-    } catch (error) {
+    } catch (error :  unknown) {
       throw error;
     }
   }
@@ -108,7 +108,7 @@ export class AuthService {
         text: MailConfig.SUBJECTS.TEXT + url,
       });
       return true;
-    } catch (error) {
+    } catch (error :  unknown) {
       throw error;
     }
   }
@@ -124,7 +124,7 @@ export class AuthService {
         throw new NotFoundException(AuthErrors.USER_NOT_FOUND);
       }
       return { message: AuthMessages.USER_AUTHORIZED };
-    } catch (error) {
+    } catch (error :  unknown) {
       throw error;
     }
   }
@@ -166,7 +166,7 @@ export class AuthService {
         isPopup: user.isPopup,
       };
       return responseData;
-    } catch (error) {
+    } catch (error :  unknown) {
       throw error;
     }
   }
@@ -179,7 +179,7 @@ export class AuthService {
         throw new BadRequestException(AuthErrors.INVALID_2FA_TOKEN);
       }
       return true;
-    } catch (error) {
+    } catch (error :  unknown) {
       throw error;
     }
   }
@@ -208,7 +208,7 @@ export class AuthService {
         secret: secret.base32,
         qrCode,
       };
-    } catch (error) {
+    } catch (error :  unknown) {
       throw error;
     }
   }
@@ -219,7 +219,7 @@ export class AuthService {
       if (!result) {
         throw new BadRequestException(AuthErrors.DISABLE_FAILED);
       }
-    } catch (error) {
+    } catch (error :  unknown) {
       throw error;
     }
   }
@@ -239,7 +239,7 @@ export class AuthService {
         encoding: 'base32',
         token,
       });
-    } catch (error) {
+    } catch (error :  unknown) {
       throw error;
     }
   }
@@ -254,7 +254,7 @@ export class AuthService {
         throw new BadRequestException(AuthErrors.INVALID_TOKEN);
       }
       return decoded.id;
-    } catch (error) {
+    } catch (error :  unknown) {
       throw error;
     }
   }
@@ -283,7 +283,7 @@ export class AuthService {
         expiresIn: AuthConfig.JWT_EXPIRATION,
       });
       return { access_token: token, role: role.role };
-    } catch (error) {
+    } catch (error :  unknown) {
       throw error;
     }
   }
@@ -303,7 +303,7 @@ export class AuthService {
         );
       }
       await this.sendVerificationEmail(email);
-    } catch (error) {
+    } catch (error :  unknown) {
       throw error;
     }
   }
@@ -318,7 +318,7 @@ export class AuthService {
       const hashedPassword = await bcrypt.hash(newPassword, 10);
       user.password = hashedPassword;
       await user.save();
-    } catch (error) {
+    } catch (error :  unknown) {
       throw error;
     }
   }

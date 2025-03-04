@@ -47,7 +47,7 @@ export class UserController {
     try {
       await this.userService.addUserSkills(req.user.id, addUserSkillsDto);
       return { statusCode: HttpStatus.OK, message: UserMessages.SKILLS_ADDED_SUCCESS };
-    } catch (error){
+    } catch (error :  unknown){
       throw error
     }
   }
@@ -66,7 +66,7 @@ export class UserController {
         message: UserMessages.SKILLS_RETRIEVED_SUCCESS,
         data: skills,
       };
-    } catch (error){
+    } catch (error :  unknown){
       throw error;
     }
   }
@@ -86,7 +86,7 @@ export class UserController {
         statusCode: HttpStatus.OK,
         message: UserMessages.SKILLS_DELETED_SUCCESS,
       };
-    } catch (error) {
+    } catch (error :  unknown) {
       throw error;
     }
   }
@@ -105,7 +105,7 @@ export class UserController {
         message: UserMessages.USER_PROFILE_RETRIEVED_SUCCESS,
         data: userProfile,
       };
-    } catch (error){
+    } catch (error :  unknown){
       throw error;
     }
   }
@@ -122,8 +122,11 @@ export class UserController {
         message: UserMessages.ALL_USER_PROFILES_RETRIEVED_SUCCESS,
         data: userProfiles,
       };
-    } catch (error) {
+    } catch (error :  unknown) {
       throw error;
     }
   }
+
+  
+
 }

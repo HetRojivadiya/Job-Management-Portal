@@ -10,7 +10,7 @@ export class CronService {
   async handleCron() {
     try {
       await this.userService.deleteUnauthorizedUsers();
-    } catch (error) {
+    } catch (error :  unknown) {
       throw new BadRequestException(error);
     }
   }

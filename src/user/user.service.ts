@@ -40,7 +40,7 @@ export class UserService {
           );
         }
       }
-    } catch (error) {
+    } catch (error :  unknown) {
       throw error;
     }
   }
@@ -58,7 +58,7 @@ export class UserService {
           proficiencyLevel: userSkill?.proficiency_level ?? 0,
         };
       });
-    } catch (error) {
+    } catch (error :  unknown) {
       throw error;
     }
   }
@@ -70,7 +70,7 @@ export class UserService {
       if (deletedSkills === 0) {
         throw new NotFoundException(ERROR_MESSAGES.SKILL_DELETE_ERROR);
       }
-    } catch (error) {
+    } catch (error :  unknown) {
       throw error;
     }
   }
@@ -104,7 +104,7 @@ export class UserService {
             }
           : undefined,
       };
-    } catch (error) {
+    } catch (error :  unknown) {
       throw error;
     }
   }
@@ -138,7 +138,7 @@ export class UserService {
           };
         }),
       );
-    } catch (error) {
+    } catch (error :  unknown) {
      throw error;
     }
   }

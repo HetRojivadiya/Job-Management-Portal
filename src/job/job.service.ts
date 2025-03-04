@@ -43,7 +43,7 @@ export class JobService {
         await this.jobSkillRepository.createJobSkill(job.id, skill.id);
       }
       return job;
-    } catch (error){
+    } catch (error :  unknown){
       throw error;
     }
   }
@@ -131,7 +131,7 @@ export class JobService {
         ...job.toJSON(),
         skills,
       } as JobWithSkills;
-    } catch (error) {
+    } catch (error :  unknown) {
       if (error instanceof NotFoundException) {
         throw error;
       }
@@ -154,4 +154,9 @@ export class JobService {
       throw new UnauthorizedException(ERROR_MESSAGES.JOB_FETCH_ERROR);
     }
   }
+
+  async getJobCount(year: string): Promise<number[]> {
+    return this.jobRepository.getJobCountByMonths(year);
+  }
+
 }

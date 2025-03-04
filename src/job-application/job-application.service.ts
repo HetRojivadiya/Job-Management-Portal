@@ -14,6 +14,8 @@ import { UserService } from 'src/user/user.service';
 import { ResumeService } from 'src/resume/resume.service';
 import { UserResponse } from './api-response/job-applicant.interface';
 import { AppliedJob } from './api-response/applied-job-response.interface';
+import { ChangeApplicationStatus } from './dto/changeApplicationStatus.dto';
+import { ApplicationStatusResponse } from './api-response/application-status.interface';
 
 @Injectable()
 export class JobApplicationService {
@@ -57,7 +59,7 @@ export class JobApplicationService {
         JobId: jobId,
         UserId: userId,
       });
-    } catch (error) {
+    } catch (error :  unknown) {
       throw error;
     }
   }
@@ -76,12 +78,14 @@ export class JobApplicationService {
           return {
             applicationId: application.id,
             appliedAt: application.createdAt,
+            status : application.status,
+            rejectionMassage : application.rejectionMessage,
             ...job,
           };
         }),
       );
       return appliedJobs.filter((job) => job !== null);
-    } catch (error) {
+    } catch (error :  unknown) {
       throw error;
     }
   }
@@ -101,7 +105,7 @@ export class JobApplicationService {
       await this.jobApplicationRepository.delete({
         id: existingApplication.id,
       });
-    } catch (error) {
+    } catch (error :  unknown) {
       throw error;
     }
   }
@@ -120,8 +124,60 @@ export class JobApplicationService {
       });
       const applicantsWithProfiles = await Promise.all(applicantDetailsPromises);
       return applicantsWithProfiles;
+    } catch (error :  unknown) {
+      throw error;
+    }
+  }
+
+
+  async changeApplicationStatus(userId: string, changeApplicationStatus: ChangeApplicationStatus): Promise<void> {
+    try {
+      if(changeApplicationStatus.status==='Rejected' && changeApplicationStatus.rejectionMessage==='')
+      {
+          throw new BadRequestException("Rejection Massage Should be There");
+      }
+        await this.jobApplicationRepository.updateJobApplication(
+          userId,
+          changeApplicationStatus,
+        );
+    } catch (error :  unknown) {
+      throw error;
+    }
+  }
+
+  async getUserApplicationStatusData(userId: string): Promise<ApplicationStatusResponse> {
+    try {
+      const result = await this.jobApplicationRepository.countApplicationsByStatus(userId);
+  
+      const statusCount: ApplicationStatusResponse = {
+        pending: 0,
+        approved: 0,
+        rejected: 0,
+      };
+  
+      result.forEach((row: any) => {
+        if (row.status === 'Pending') {
+          statusCount.pending = Number(row.count);
+        } else if (row.status === 'Approved') {
+          statusCount.approved = Number(row.count);
+        } else if (row.status === 'Rejected') {
+          statusCount.rejected = Number(row.count);
+        }
+      });
+  
+      return statusCount;
     } catch (error) {
       throw error;
     }
   }
+
+  async getApplicationCount(year: string): Promise<number[]> {
+    try{
+      return this.jobApplicationRepository.getJobCountByMonths(year);
+    }catch(error : unknown)
+    {
+      throw error;
+    }
+  }
+  
 }

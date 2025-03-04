@@ -11,6 +11,7 @@ import {
   Get,
   UnauthorizedException,
   NotFoundException,
+  Query,
 } from '@nestjs/common';
 import { JobService, JobWithSkills } from './job.service';
 import { CreateJobDto, UpdateJobDto } from './dto/job.dto';
@@ -23,12 +24,13 @@ import { ERROR_MESSAGES } from './constants/error-messages.constants';
 import {
   ApiBody,
   ApiOperation,
-  ApiParam,
   ApiResponse as SwaggerApiResponse,
 } from '@nestjs/swagger';
 import { SwaggerConstants } from './constants/swagger.constants';
 import { error } from 'console';
 import { ROUTES } from './constants/routes.constants';
+import { ApiResponse } from 'src/common/api.response';
+import { MESSAGES } from './constants/massages';
 
 @Controller(ROUTES.BASE)
 @UseGuards(JwtAuthGuard, UserRoleGuard)
@@ -53,7 +55,7 @@ export class JobController {
         message: 'Job created successfully',
         data: job,
       };
-    } catch (error){
+    } catch (error :  unknown){
       throw error
     }
   }
@@ -110,8 +112,25 @@ export class JobController {
   async getRecommendedJobs(
     @Req() req: RequestWithUser,
   ): Promise<JobWithSkills[]> {
-    return this.jobService.getRecommandedJob(req.user.id);
+    try{
+      return this.jobService.getRecommandedJob(req.user.id);
+    }catch(error : unknown){  
+      throw error;
+    }
   }
+
+
+  @Get(ROUTES.JOB_COUNT)
+  async getJobCount( @Query('year') year: string): Promise<ApiResponse<number[]>> {
+    const count = await this.jobService.getJobCount(year);
+    return {
+      statusCode: 200,
+      message: MESSAGES.FETCH_JOB_COUNT_SUCCESSFULL,
+      data: count ,
+    };
+  }
+
+
 
   @ApiOperation({ summary: SwaggerConstants.GetJobById.summary })
   @SwaggerApiResponse(SwaggerConstants.GetJobById.response.success)
@@ -124,11 +143,15 @@ export class JobController {
         throw new NotFoundException(ERROR_MESSAGES.JOB_NOT_FOUND);
       }
       return job;
-    } catch (error) {
+    } catch (error :  unknown) {
       if (error instanceof NotFoundException) {
         throw error;
       }
       throw new UnauthorizedException(ERROR_MESSAGES.JOB_FETCH_ERROR);
     }
   }
+
+
+ 
+  
 }

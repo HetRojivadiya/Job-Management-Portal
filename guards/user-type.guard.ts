@@ -27,6 +27,7 @@ export class UserRoleGuard implements CanActivate {
     if (!requiredRole) {
       return true;
     }
+    
 
     if (userRole !== requiredRole) {
       throw new ForbiddenException(ERROR_MESSAGES.PERMISSIONS);

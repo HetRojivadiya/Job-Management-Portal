@@ -14,7 +14,10 @@ export const ERROR_MESSAGES = {
 
 export const SUCCESS_MESSAGES = {
   APPLICATION_SUBMITTED: 'Job application submitted successfully',
+  FETCH_APPLICATION_COUNT_SUCCESSFULL : 'Fetch Application Count Successfull',
   JOBS_RETRIEVED: 'Applied jobs retrieved successfully',
   APPLICATION_DELETED: 'Job application deleted successfully',
   APPLICANTS_RETRIEVED: 'Job applicants retrieved successfully',
+  STATUS_CHANGE_SUCCESSFULL : 'Status Change successfully',
+  APPLICATION_STATUS_DATA_FETCH_SUCCESSFULL : 'Application Status Data Fetch Successfull',
 };
